@@ -1,6 +1,5 @@
 import express from "express";
-
-import emojis from "./emojis.js";
+import changenote from "./changenote.js";
 import users from "./user.js";
 
 const router = express.Router();
@@ -11,7 +10,7 @@ router.get("/", (req, res) => {
   });
 });
 
-router.use("/emojis", emojis);
 router.use("/auth", users);
+router.use("/changenote", changenote);
 
 export default router;

@@ -8,6 +8,7 @@ import api from "./api/index.js";
 import { db } from "./config/db.config.js";
 
 import * as middlewares from "./middlewares.js";
+import { Changenote } from "./model/Changenote.js";
 import { User } from "./model/User.js";
 
 const app = express();
@@ -16,6 +17,7 @@ try {
   await db.authenticate();
 
   User.sync({ alter: true });
+  Changenote.sync({ alter: true })
 
   console.log("Connection to the database has been established successfully.");
 }
