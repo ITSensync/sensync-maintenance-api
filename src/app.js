@@ -8,13 +8,16 @@ import api from "./api/index.js";
 import { db } from "./config/db.config.js";
 
 import * as middlewares from "./middlewares.js";
+import { User } from "./model/User.js";
 
 const app = express();
 
 try {
   await db.authenticate();
 
-  console.log('Connection to the database has been established successfully.');
+  User.sync({ alter: true });
+
+  console.log("Connection to the database has been established successfully.");
 }
 catch (error) {
   console.error("Unable to connect to database:", error);
