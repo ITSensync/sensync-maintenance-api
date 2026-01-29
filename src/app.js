@@ -16,8 +16,8 @@ const app = express();
 try {
   await db.authenticate();
 
-  User.sync();
-  Changenote.sync();
+  User.sync({ alter: true });
+  Changenote.sync({ alter: true });
 
   console.log("Connection to the database has been established successfully.");
 }
