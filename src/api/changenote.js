@@ -1,5 +1,5 @@
 import express from "express";
-import ChangenoteController from "../controller/Changenote.controller.js";
+import ChangenoteController from "../controller/changenote.controller.js";
 import * as middlewares from "../middlewares.js";
 
 const router = express.Router();
