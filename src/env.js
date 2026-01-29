@@ -8,6 +8,7 @@ const envSchema = z.object({
   DB_PASSWORD: z.string(),
   DB_HOST: z.string(),
   DB_DIALECT: z.string(),
+  ACCESS_SECRET_TOKEN: z.string(),
 });
 
 try {
