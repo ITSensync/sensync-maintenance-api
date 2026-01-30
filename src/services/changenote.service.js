@@ -7,6 +7,7 @@ async function getAll(query) {
     const { id_device } = query;
 
     const options = {};
+    options.order = [["createdAt", "DESC"]];
 
     if (id_device) {
       options.where = { id_device };
