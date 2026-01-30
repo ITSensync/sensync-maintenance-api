@@ -10,7 +10,7 @@ async function update(req, res) {
   res.status(result.status).send(result);
 }
 async function get(req, res) {
-  const result = await changenoteService.getAll(req.body);
+  const result = await changenoteService.getAll(req.query);
   res.status(result.status).send(result);
 }
 async function destroy(req, res) {

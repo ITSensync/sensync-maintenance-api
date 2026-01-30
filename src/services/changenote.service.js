@@ -1,8 +1,18 @@
 import { Changenote } from "../model/Changenote.js";
 
-async function getAll() {
+async function getAll(query) {
   try {
-    const allChangenote = await Changenote.findAll();
+    // console.log(query);
+
+    const { id_device } = query;
+
+    const options = {};
+
+    if (id_device) {
+      options.where = { id_device };
+    }
+
+    const allChangenote = await Changenote.findAll(options);
 
     return {
       status: 200,
