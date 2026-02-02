@@ -9,6 +9,7 @@ import { db } from "./config/db.config.js";
 
 import * as middlewares from "./middlewares.js";
 import { Changenote } from "./model/Changenote.js";
+import { Document } from "./model/Document.js";
 import { User } from "./model/User.js";
 
 const app = express();
@@ -18,6 +19,7 @@ try {
 
   User.sync({ alter: true });
   Changenote.sync({ alter: true });
+  Document.sync({ alter: true });
 
   console.log("Connection to the database has been established successfully.");
 }
