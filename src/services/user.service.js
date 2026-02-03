@@ -34,7 +34,7 @@ async function login(body) {
       };
     }
 
-    const token = jwt.sign({ id: existedUser.id, username: existedUser.username }, SECRET_TOKEN, { expiresIn: "1h" });
+    const token = jwt.sign({ id: existedUser.id, username: existedUser.username }, SECRET_TOKEN, { expiresIn: "12h" });
 
     existedUser.accessToken = token;
     existedUser.save();
@@ -42,7 +42,7 @@ async function login(body) {
     return {
       status: 200,
       access_token: token,
-      expires_in: "1h",
+      expires_in: "12h",
     };
   }
   catch (error) {
