@@ -4,6 +4,6 @@ import * as middlewares from "../middlewares.js";
 
 const router = express.Router();
 
-router.post("/", middlewares.verifyToken, generateController.generateKorektif);
+router.post("/korektif", middlewares.verifyToken, generateController.generateKorektif);
 
 export default router;
