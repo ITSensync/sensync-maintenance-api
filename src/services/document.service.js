@@ -51,6 +51,16 @@ async function getLatest() {
       order: [["no_ba", "DESC"]],
     });
 
+    if (!latestDocument) {
+      return {
+        status: 200,
+        message: "get latest document data successful",
+        data: {
+          no_ba: 1,
+        },
+      };
+    }
+
     return {
       status: 200,
       message: "get latest document data successful",
