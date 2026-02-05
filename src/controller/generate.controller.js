@@ -5,9 +5,9 @@ async function generateKorektif(req, res) {
 
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
 
   res.send(buffer);
-
 }
 
 export default {
