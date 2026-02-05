@@ -1,9 +1,13 @@
 import generateService from "../services/generate.service.js";
 
 async function generateKorektif(req, res) {
-  const filePath = await generateService.BAKorektif(req.body);
+  const { buffer, filename } = await generateService.BAKorektif(req.body);
 
-  res.download(filePath);
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+
+  res.send(buffer);
+
 }
 
 export default {

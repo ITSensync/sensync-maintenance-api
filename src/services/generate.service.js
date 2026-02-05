@@ -113,7 +113,10 @@ async function BAKorektif(body) {
 
   fs.writeFileSync(`./tmp/ba_korektif_${body.site}_${fileDate}.pdf`, pdfBuf);
 
-  return `./tmp/ba_korektif_${body.site}_${fileDate}.pdf`;
+  return {
+    buffer: pdfBuf,
+    filename: `ba_korektif_${body.site}_${fileDate}.pdf`,
+  };
 }
 
 export default {
