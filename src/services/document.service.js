@@ -1,3 +1,4 @@
+import { Op } from "sequelize";
 import { Document } from "../model/Document.js";
 
 async function add(body) {
@@ -7,7 +8,7 @@ async function add(body) {
       order: [["no_ba", "DESC"]],
     });
     const newDocument = await Document.create({
-      no_ba: latestNoBa ? latestNoBa.no_ba + 1 : 1,
+      no_ba: latestNoBa ? latestNoBa.no_ba : 1,
       ...body,
     });
 
@@ -47,7 +48,21 @@ async function getAll() {
 
 async function getLatest() {
   try {
+    const now = new Date();
+
+    // awal bulan
+    const startMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // awal bulan berikutnya
+    const endMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
     const latestDocument = await Document.findOne({
+      where: {
+        createdAt: {
+          [Op.gte]: startMonth,
+          [Op.lt]: endMonth,
+        },
+      },
       order: [["no_ba", "DESC"]],
     });
 
@@ -55,16 +70,14 @@ async function getLatest() {
       return {
         status: 200,
         message: "get latest document data successful",
-        data: {
-          no_ba: 1,
-        },
+        data: { no_ba: 1 },
       };
     }
 
     return {
       status: 200,
       message: "get latest document data successful",
-      data: latestDocument,
+      data: { no_ba: latestDocument.no_ba + 1 }, // auto next number
     };
   }
   catch (error) {
