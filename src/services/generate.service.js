@@ -4,6 +4,8 @@ import Docxtemplater from "docxtemplater";
 import ImageModule from "docxtemplater-image-module-free";
 import libre from "libreoffice-convert";
 import PizZip from "pizzip";
+import documentService from "./document.service.js";
+import odooService from "./odoo.service.js";
 
 const PARAF_PATH = "./templates/paraf_korektif.png";
 
@@ -111,7 +113,18 @@ async function BAKorektif(body) {
     });
   });
 
-  fs.writeFileSync(`./tmp/ba_korektif_${body.site}_${fileDate}.pdf`, pdfBuf);
+  // fs.writeFileSync(`./tmp/ba_korektif_${body.site}_${fileDate}.pdf`, pdfBuf);
+
+  // UPLOAD TO ODOO
+  const filename = `ba_korektif_${body.site}_${fileDate}.pdf`;
+
+  const resultOdoo = await odooService.mainProcess(pdfBuf, [`BA Pemeliharaan`, body.site, "Korektif"], filename);
+
+  // add to database
+  await documentService.add({
+    catatan: "",
+    link: resultOdoo.url,
+  });
 
   return {
     buffer: pdfBuf,

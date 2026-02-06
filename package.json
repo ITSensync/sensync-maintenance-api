@@ -18,6 +18,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "axios": "^1.13.4",
+    "axios-cookiejar-support": "^6.0.5",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "docxtemplater": "^3.67.6",
@@ -31,6 +33,7 @@
     "mysql2": "^3.16.1",
     "pizzip": "^3.2.0",
     "sequelize": "^6.37.7",
+    "tough-cookie": "^6.0.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {
