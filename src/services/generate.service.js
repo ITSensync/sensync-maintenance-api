@@ -9,7 +9,7 @@ import odooService from "./odoo.service.js";
 
 const PARAF_PATH = "./templates/paraf_korektif.png";
 
-async function BAKorektif(body) {
+async function BAKorektif(body, files) {
   const content = fs.readFileSync("./templates/template_korektif.docx", "binary");
   const imageModule = new ImageModule({
     getImage(tagValue) {
@@ -55,7 +55,11 @@ async function BAKorektif(body) {
     linebreaks: true,
   });
 
-  const items = body.items.map((x, i) => ({
+  const itemsRaw = body.items
+    ? JSON.parse(body.items)
+    : [];
+
+  const items = itemsRaw.map((x, i) => ({
     no: i + 1,
     ...x,
     status: x.status === "ok" ? PARAF_PATH : x.status,
@@ -116,15 +120,25 @@ async function BAKorektif(body) {
   // fs.writeFileSync(`./tmp/ba_korektif_${body.site}_${fileDate}.pdf`, pdfBuf);
 
   // UPLOAD TO ODOO
+  const site = body.site;
   const filename = `ba_korektif_${body.site}_${fileDate}.pdf`;
 
-  const resultOdoo = await odooService.mainProcess(pdfBuf, [`BA Pemeliharaan`, body.site, "Korektif"], filename);
+  const resultOdoo = await odooService.mainProcess(pdfBuf, [`BA Pemeliharaan`, site, "Korektif"], filename);
 
   // add to database
   await documentService.add({
     catatan: "",
     link: resultOdoo.url,
   });
+
+  // UPLOAD DOKUMENTASI KE ODOO
+  for (const file of files) {
+    await odooService.mainProcess(
+      file.buffer,
+      [`Maintenance Sparing ${body.lokasi}`, site, today],
+      file.originalname,
+    );
+  }
 
   return {
     buffer: pdfBuf,

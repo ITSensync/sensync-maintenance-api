@@ -29,8 +29,12 @@ catch (error) {
 
 app.use(morgan("dev"));
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: "*", // frontend kamu
+  credentials: false,
+}));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/v1", api);
 
