@@ -7,8 +7,12 @@ async function add(body) {
       attributes: ["no_ba"],
       order: [["no_ba", "DESC"]],
     });
+    const nowWIB = new Date(Date.now() + (7 * 60 * 60 * 1000));
+
     const newDocument = await Document.create({
       no_ba: latestNoBa ? latestNoBa.no_ba + 1 : 1,
+      createdAt: nowWIB,
+      updatedAt: nowWIB,
       ...body,
     });
 
