@@ -8,7 +8,7 @@ async function add(body) {
       order: [["no_ba", "DESC"]],
     });
     const newDocument = await Document.create({
-      no_ba: latestNoBa ? latestNoBa.no_ba : 1,
+      no_ba: latestNoBa ? latestNoBa.no_ba + 1 : 1,
       ...body,
     });
 
