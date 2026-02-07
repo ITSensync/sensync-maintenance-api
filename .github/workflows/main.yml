@@ -1,0 +1,42 @@
+name: Deploy Express Docker
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 1404
+          script: |
+            cd /var/www/api-maintenance.getsensync.com
+
+            echo "Pull latest code"
+            git pull origin main
+
+            echo "Stop old container"
+            docker stop maintenance-api || true
+            docker rm maintenance-api || true
+
+            echo "Build new image"
+            docker build -t maintenance-api .
+
+            echo "Run container"
+            docker run -d \
+              --name maintenance-api \
+              -p 3005:3005 \
+              --restart always \
+              --add-host=host.docker.internal:host-gateway \
+              -e TZ=Asia/Jakarta \
+              maintenance-api
+
+            echo "Deploy done"
