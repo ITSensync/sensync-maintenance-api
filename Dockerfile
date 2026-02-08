@@ -1,8 +1,5 @@
 FROM node:22-bullseye
 
-COPY local.conf /etc/fonts/local.conf
-RUN fc-cache -f -v
-
 # install libreoffice binary + fonts
 RUN apt-get update && apt-get install -y \
     libreoffice-writer \
@@ -10,6 +7,9 @@ RUN apt-get update && apt-get install -y \
     fonts-liberation \
     fonts-noto \
     && rm -rf /var/lib/apt/lists/*
+
+COPY local.conf /etc/fonts/local.conf
+RUN fc-cache -f -v
 
 WORKDIR /app
 
