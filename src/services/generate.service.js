@@ -151,6 +151,8 @@ async function BAPreventif(body, files) {
     body[key] = parseJSON(body[key]);
   });
 
+  console.log(body);
+
   const content = fs.readFileSync("./templates/template_preventif.docx", "binary");
   const imageModule = new ImageModule({
     getImage(tagValue) {
