@@ -151,8 +151,6 @@ async function BAPreventif(body, files) {
   Object.keys(body).forEach((key) => {
     body[key] = parseJSON(body[key]);
   });
-  
-  console.log(body);
 
   const content = fs.readFileSync("./templates/template_preventif.docx", "binary");
   const imageModule = new ImageModule({
@@ -218,7 +216,7 @@ async function BAPreventif(body, files) {
   /* CONVERT INPUT SEBELUM/SESUDAH */
   const statusIcon = (val) => {
     if (val === "ok")
-      return "V";
+      return "✔";
     if (val === "not_ok")
       return "-";
     return "";
