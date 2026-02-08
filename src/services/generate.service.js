@@ -309,7 +309,7 @@ async function BAPreventif(body, files) {
 
   // add to database
   await documentService.add({
-    catatan: "",
+    catatan: body.catatan,
     link: resultOdoo.url,
   });
 
