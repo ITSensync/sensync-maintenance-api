@@ -216,7 +216,7 @@ async function BAPreventif(body, files) {
   /* CONVERT INPUT SEBELUM/SESUDAH */
   const statusIcon = (val) => {
     if (val === "ok")
-      return "✔";
+      return "V";
     if (val === "not_ok")
       return "-";
     return "";

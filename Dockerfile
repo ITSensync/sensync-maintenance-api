@@ -8,9 +8,6 @@ RUN apt-get update && apt-get install -y \
     fonts-noto \
     && rm -rf /var/lib/apt/lists/*
 
-COPY local.conf /etc/fonts/local.conf
-RUN fc-cache -f -v
-
 WORKDIR /app
 
 COPY package*.json ./
