@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /* eslint-disable node/prefer-global/buffer */
 import fs from "node:fs";
 import Docxtemplater from "docxtemplater";
@@ -141,10 +140,20 @@ async function BAKorektif(body, files) {
     );
   }
 
+  // TEMPORARY FILE FOR PREVIEW
+  const id = crypto.randomUUID();
+  const previewName = `${id}.pdf`;
+  fs.writeFileSync(`./tmp/${previewName}`, pdfBuf);
+
   return {
+    success: true,
+    url: `preview/${previewName}`,
+  };
+
+  /* return {
     buffer: pdfBuf,
     filename: `ba_korektif_${body.site}_${fileDate}.pdf`,
-  };
+  }; */
 }
 
 async function BAPreventif(body, files) {
@@ -322,12 +331,21 @@ async function BAPreventif(body, files) {
     );
   }
 
+  // TEMPORARY FILE FOR PREVIEW
+  const id = crypto.randomUUID();
+  const previewName = `${id}.pdf`;
+  fs.writeFileSync(`./tmp/${previewName}`, pdfBuf);
+
   return {
-    buffer: pdfBuf,
-    filename: `ba_preventif_${body.site}_${fileDate}.pdf`,
+    success: true,
+    url: `preview/${previewName}`,
   };
 
   // return true; //for debugging
+}
+
+async function previewFile(filename) {
+  return { filePath: `./tmp/${filename}` };
 }
 
 function parseJSON(val) {
@@ -342,4 +360,5 @@ function parseJSON(val) {
 export default {
   BAKorektif,
   BAPreventif,
+  previewFile,
 };
