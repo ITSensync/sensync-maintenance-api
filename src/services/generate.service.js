@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable node/prefer-global/buffer */
 import fs from "node:fs";
 import Docxtemplater from "docxtemplater";
@@ -150,7 +151,7 @@ async function BAPreventif(body, files) {
   Object.keys(body).forEach((key) => {
     body[key] = parseJSON(body[key]);
   });
-
+  
   console.log(body);
 
   const content = fs.readFileSync("./templates/template_preventif.docx", "binary");
