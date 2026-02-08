@@ -147,6 +147,10 @@ async function BAKorektif(body, files) {
 }
 
 async function BAPreventif(body, files) {
+  Object.keys(body).forEach((key) => {
+    body[key] = parseJSON(body[key]);
+  });
+
   const content = fs.readFileSync("./templates/template_preventif.docx", "binary");
   const imageModule = new ImageModule({
     getImage(tagValue) {
@@ -208,6 +212,18 @@ async function BAPreventif(body, files) {
     year: "numeric",
   }).format(now);
 
+  /* CONVERT INPUT SEBELUM/SESUDAH */
+  const statusIcon = (val) => {
+    if (val === "ok")
+      return "✔";
+    if (val === "not_ok")
+      return "-";
+    return "";
+  };
+
+  const getStatus = (key, when) =>
+    statusIcon(body[key]?.[when]);
+
   doc.render({
     nomor_ba: body.nomor_ba,
     site: body.site,
@@ -218,11 +234,50 @@ async function BAPreventif(body, files) {
     today,
     ttd_teknisi: body.ttd_teknisi,
     ttd_pengawas_lapangan: body.ttd_pengawas_lapangan,
+
+    // CHECKLIST SEBELUM
+    tampilan_sebelum: getStatus("tampilan", "sebelum"),
+    internet_sebelum: getStatus("internet", "sebelum"),
+    minipc_sebelum: getStatus("minipc", "sebelum"),
+    sensor_sebelum: getStatus("sensor", "sebelum"),
+    bersih_sebelum: getStatus("bersih", "sebelum"),
+    chamber_sebelum: getStatus("chamber", "sebelum"),
+    pembacaan_sebelum: getStatus("pembacaan", "sebelum"),
+    kalibrasi_sebelum: getStatus("kalibrasi_selesai", "sebelum"),
+    cod_sebelum: body.cod.sebelum,
+    tss_sebelum: body.tss.sebelum,
+    ph_sebelum: body.ph.sebelum,
+    nh3n_sebelum: body.nh3n.sebelum,
+    connector_sebelum: getStatus("connector", "sebelum"),
+    flowmeter_sebelum: getStatus("flowmeter", "sebelum"),
+    pompa_sebelum: getStatus("pompa", "sebelum"),
+    data_sebelum: getStatus("data", "sebelum"),
+
+    // CHECKLIST SESUDAH
+    tampilan_sesudah: getStatus("tampilan", "sesudah"),
+    internet_sesudah: getStatus("internet", "sesudah"),
+    minipc_sesudah: getStatus("minipc", "sesudah"),
+    sensor_sesudah: getStatus("sensor", "sesudah"),
+    bersih_sesudah: getStatus("bersih", "sesudah"),
+    chamber_sesudah: getStatus("chamber", "sesudah"),
+    pembacaan_sesudah: getStatus("pembacaan", "sesudah"),
+    kalibrasi_sesudah: getStatus("kalibrasi_selesai", "sesudah"),
+    cod_sesudah: body.cod.sesudah,
+    tss_sesudah: body.tss.sesudah,
+    ph_sesudah: body.ph.sesudah,
+    nh3n_sesudah: body.nh3n.sesudah,
+    connector_sesudah: getStatus("connector", "sesudah"),
+    flowmeter_sesudah: getStatus("flowmeter", "sesudah"),
+    pompa_sesudah: getStatus("pompa", "sesudah"),
+    data_sesudah: getStatus("data", "sesudah"),
+
+    keterangan: body.keterangan,
+    catatan: body.catatan,
   });
 
   const buf = doc.toBuffer();
 
-  // fs.writeFileSync(`./tmp/ba_korektif_${body.site}.docx`, buf);
+  // fs.writeFileSync(`./tmp/ba_preventif_${body.site}.docx`, buf);
 
   // return `./tmp/ba_korektif_${body.site}.docx`;
 
@@ -243,7 +298,7 @@ async function BAPreventif(body, files) {
     });
   });
 
-  // fs.writeFileSync(`./tmp/ba_korektif_${body.site}_${fileDate}.pdf`, pdfBuf);
+  // fs.writeFileSync(`./tmp/ba_korektif_${body.site}_${fileDate}.pdf`, pdfBuf); //for debugging
 
   // UPLOAD TO ODOO
   const site = body.site;
@@ -270,6 +325,17 @@ async function BAPreventif(body, files) {
     buffer: pdfBuf,
     filename: `ba_preventif_${body.site}_${fileDate}.pdf`,
   };
+
+  // return true; //for debugging
+}
+
+function parseJSON(val) {
+  try {
+    return JSON.parse(val);
+  }
+  catch {
+    return val;
+  }
 }
 
 export default {
