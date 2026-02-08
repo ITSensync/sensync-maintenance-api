@@ -28,7 +28,7 @@ jobs:
             docker rm maintenance-api || true
 
             echo "Build new image"
-            docker build -t maintenance-api .
+            docker build --no-cache -t maintenance-api .
 
             echo "Run container"
             docker run -d \
