@@ -1,9 +1,12 @@
 /* eslint-disable node/prefer-global/buffer */
 import fs from "node:fs";
+import path from "node:path";
 import Docxtemplater from "docxtemplater";
 import ImageModule from "docxtemplater-image-module-free";
+// import ExcelJS from "exceljs";
 import libre from "libreoffice-convert";
 import PizZip from "pizzip";
+import XlsxPopulate from "xlsx-populate";
 import documentService from "./document.service.js";
 import odooService from "./odoo.service.js";
 
@@ -316,6 +319,10 @@ async function BAPreventif(body, files) {
 
   const resultOdoo = await odooService.mainProcess(pdfBuf, [`BA Pemeliharaan`, site, "Preventif"], filename);
 
+  // GENERATE KALIBRASI
+  const result = await generateKalibrasi(body.kalibrasi, body.site, fileDate);
+  await odooService.mainProcess(result.buffer, ["4. Kalibrasi & QC", site, today], result.filename);
+
   // add to database
   await documentService.add({
     catatan: body.catatan,
@@ -341,7 +348,77 @@ async function BAPreventif(body, files) {
     url: `preview/${previewName}`,
   };
 
-  // return true; //for debugging
+  // return true; // for debugging
+}
+
+async function generateKalibrasi(data, site, tanggal) {
+  try {
+    const template = path.resolve("./templates/template_kalibrasi.xlsx");
+
+    /* const filename = `kalibrasi_${site}_${tanggal}.xlsx`;
+    const output = path.resolve(`./tmp/${filename}`);
+
+    // copy template supaya file asli aman
+    fs.copyFileSync(template, output);
+
+    // buka file hasil copy (chart tetap ada)
+    const workbook = await XlsxPopulate.fromFileAsync(output); */
+
+    const workbook = await XlsxPopulate.fromFileAsync(template);
+
+    const mapping = {
+      cod: "COD",
+      ph: "pH",
+      tss: "TSS",
+      nh3n: "NH3N",
+    };
+
+    for (const key in mapping) {
+      if (!data[key])
+        continue;
+
+      const sheet = workbook.sheet(mapping[key]);
+      const formulaCols = ["C", "D", "E", "F", "G"]; // kolom dengan rumus
+      const startRow = 3;
+      const dataRows = data[key].length;
+      const lastDataRow = startRow + dataRows - 1; // baris terakhir untuk data, sebelum Average
+
+      data[key].forEach((item, index) => {
+        const row = startRow + index;
+
+        // isi data kolom A & B
+        sheet.cell(`A${row}`).value(Number(item.larutan));
+        sheet.cell(`B${row}`).value(Number(item.nilai));
+
+        // copy rumus dari baris 3 ke baris data baru, hanya ganti nomor baris
+        formulaCols.forEach((col) => {
+          const formula = sheet.cell(`${col}3`).formula();
+          if (formula && row <= lastDataRow) {
+            // ganti hanya angka 3 dengan nomor baris baru, sisanya tetap
+            const newFormula = formula.replace(/3/g, row);
+            sheet.cell(`${col}${row}`).formula(newFormula);
+          }
+        });
+      });
+    }
+
+    // save TANPA merusak chart
+    const fileBuffer = await workbook.outputAsync();
+
+    return {
+      status: 200,
+      success: true,
+      buffer: fileBuffer,
+      filename: `kalibrasi_${site}_${tanggal}.xlsx`,
+    };
+  }
+  catch (error) {
+    console.error(error);
+    return {
+      status: 500,
+      message: error.message,
+    };
+  }
 }
 
 async function previewFile(filename) {
@@ -361,4 +438,5 @@ export default {
   BAKorektif,
   BAPreventif,
   previewFile,
+  generateKalibrasi,
 };
