@@ -123,8 +123,13 @@ async function BAKorektif(body, files) {
   // fs.writeFileSync(`./tmp/ba_korektif_${body.site}_${fileDate}.pdf`, pdfBuf);
 
   // UPLOAD TO ODOO
-  const site = body.site;
-  const filename = `ba_korektif_${body.site}_${fileDate}.pdf`;
+  let site = body.site;
+  if (site === "Sinar Sukses Mandiri") {
+    site = "SSM";
+  } else if (site === "Bintang Cipta Perkasa") {
+    site = "BCP";
+  }
+  const filename = `ba_korektif_${site}_${fileDate}.pdf`;
 
   const resultOdoo = await odooService.mainProcess(pdfBuf, [`BA Pemeliharaan`, site, "Korektif"], filename);
 
@@ -314,13 +319,18 @@ async function BAPreventif(body, files) {
   // fs.writeFileSync(`./tmp/ba_korektif_${body.site}_${fileDate}.pdf`, pdfBuf); //for debugging
 
   // UPLOAD TO ODOO
-  const site = body.site;
-  const filename = `ba_preventif_${body.site}_${fileDate}.pdf`;
+  let site = body.site;
+  if (site === "Sinar Sukses Mandiri") {
+    site = "SSM";
+  } else if (site === "Bintang Cipta Perkasa") {
+    site = "BCP";
+  }
+  const filename = `ba_preventif_${site}_${fileDate}.pdf`;
 
   const resultOdoo = await odooService.mainProcess(pdfBuf, [`BA Pemeliharaan`, site, "Preventif"], filename);
 
   // GENERATE KALIBRASI
-  const result = await generateKalibrasi(body.kalibrasi, body.site, fileDate);
+  const result = await generateKalibrasi(body.kalibrasi, site, fileDate);
   await odooService.mainProcess(result.buffer, ["4. Kalibrasi & QC", site, today], result.filename);
 
   // add to database
