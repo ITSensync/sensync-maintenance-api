@@ -126,10 +126,11 @@ async function BAKorektif(body, files) {
   let site = body.site;
   if (site === "Sinar Sukses Mandiri") {
     site = "SSM";
-  } else if (site === "Bintang Cipta Perkasa") {
+  }
+  else if (site === "Bintang Cipta Perkasa") {
     site = "BCP";
   }
-  const filename = `ba_korektif_${site}_${fileDate}.pdf`;
+  const filename = `berita_acara_${site}_${fileDate}.pdf`;
 
   const resultOdoo = await odooService.mainProcess(pdfBuf, [`BA Pemeliharaan`, site, "Korektif"], filename);
 
@@ -322,10 +323,11 @@ async function BAPreventif(body, files) {
   let site = body.site;
   if (site === "Sinar Sukses Mandiri") {
     site = "SSM";
-  } else if (site === "Bintang Cipta Perkasa") {
+  }
+  else if (site === "Bintang Cipta Perkasa") {
     site = "BCP";
   }
-  const filename = `ba_preventif_${site}_${fileDate}.pdf`;
+  const filename = `berita_acara_${site}_${fileDate}.pdf`;
 
   const resultOdoo = await odooService.mainProcess(pdfBuf, [`BA Pemeliharaan`, site, "Preventif"], filename);
 
