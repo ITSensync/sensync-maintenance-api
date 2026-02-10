@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.post("/korektif", middlewares.verifyToken, uploadDokumentasi, generateController.generateKorektif);
 router.post("/preventif", middlewares.verifyToken, uploadDokumentasi, generateController.generatePreventif);
-router.post("/kalibrasi", middlewares.verifyToken, uploadDokumentasi, generateController.generatePreventif);
+router.post("/kalibrasi", middlewares.verifyToken, generateController.generatePreventif);
 router.get("/preview/:file", uploadDokumentasi, generateController.previewFile);
 
 export default router;
