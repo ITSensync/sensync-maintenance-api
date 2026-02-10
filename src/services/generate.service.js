@@ -449,6 +449,17 @@ async function upload(files, body) {
       body[key] = parseJSON(body[key]);
     });
 
+    let site = body.site;
+    if (site === "Sinar Sukses Mandiri") {
+      site = "SSM";
+    }
+    else if (site === "Bintang Cipta Perkasa") {
+      site = "BCP";
+    }
+    else if (site === "Indorama Synthetics Div. Spinning") {
+      site = "Spinning";
+    }
+
     const now = new Date();
 
     const today = new Intl.DateTimeFormat("id-ID", {
@@ -460,7 +471,10 @@ async function upload(files, body) {
     let location;
 
     if (body.type === "sparing") {
-      location = [`Maintenance Sparing ${body.domisili}`, body.site, today];
+      location = [`Maintenance Sparing ${body.domisili}`, site, today];
+    }
+    else if (body.type === "aqms") {
+      location = [`AQMS ${site}`, today];
     }
 
     for (const file of files) {
