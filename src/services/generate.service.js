@@ -12,7 +12,7 @@ import odooService from "./odoo.service.js";
 
 const PARAF_PATH = "./templates/paraf_korektif.png";
 
-async function BAKorektif(body, files) {
+async function BAKorektif(body) {
   const content = fs.readFileSync("./templates/template_korektif.docx", "binary");
   const imageModule = new ImageModule({
     getImage(tagValue) {
@@ -141,13 +141,13 @@ async function BAKorektif(body, files) {
   });
 
   // UPLOAD DOKUMENTASI KE ODOO
-  for (const file of files) {
+  /* for (const file of files) {
     await odooService.mainProcess(
       file.buffer,
       [`Maintenance Sparing ${body.lokasi}`, site, today],
       file.originalname,
     );
-  }
+  } */
 
   // TEMPORARY FILE FOR PREVIEW
   const id = crypto.randomUUID();
@@ -165,7 +165,7 @@ async function BAKorektif(body, files) {
   }; */
 }
 
-async function BAPreventif(body, files) {
+async function BAPreventif(body) {
   Object.keys(body).forEach((key) => {
     body[key] = parseJSON(body[key]);
   });
@@ -332,8 +332,8 @@ async function BAPreventif(body, files) {
   const resultOdoo = await odooService.mainProcess(pdfBuf, [`BA Pemeliharaan`, site, "Preventif"], filename);
 
   // GENERATE KALIBRASI
-  const result = await generateKalibrasi(body.kalibrasi, site, fileDate);
-  await odooService.mainProcess(result.buffer, ["4. Kalibrasi & QC", site, today], result.filename);
+  /* const result = await generateKalibrasi(body.kalibrasi, site, fileDate);
+  await odooService.mainProcess(result.buffer, ["4. Kalibrasi & QC", site, today], result.filename); */
 
   // add to database
   await documentService.add({
@@ -342,13 +342,13 @@ async function BAPreventif(body, files) {
   });
 
   // UPLOAD DOKUMENTASI KE ODOO
-  for (const file of files) {
+  /* for (const file of files) {
     await odooService.mainProcess(
       file.buffer,
       [`Maintenance Sparing ${body.lokasi}`, site, today],
       file.originalname,
     );
-  }
+  } */
 
   // TEMPORARY FILE FOR PREVIEW
   const id = crypto.randomUUID();

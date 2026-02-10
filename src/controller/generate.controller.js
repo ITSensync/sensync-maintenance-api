@@ -3,7 +3,7 @@ import path from "node:path";
 import generateService from "../services/generate.service.js";
 
 async function generateKorektif(req, res) {
-  const result = await generateService.BAKorektif(req.body, req.files);
+  const result = await generateService.BAKorektif(req.body);
 
   res.json(result);
 
@@ -17,7 +17,7 @@ async function generateKorektif(req, res) {
 }
 
 async function generatePreventif(req, res) {
-  const result = await generateService.BAPreventif(req.body, req.files);
+  const result = await generateService.BAPreventif(req.body);
 
   res.json(result);
 
