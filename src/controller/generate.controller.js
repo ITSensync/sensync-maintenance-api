@@ -28,6 +28,12 @@ async function generatePreventif(req, res) {
   res.send(buffer); */
 }
 
+async function generateKalibrasi(req, res) {
+  const result = await generateService.generateKalibrasi(req.body);
+
+  res.status(result.status).send(result);
+}
+
 async function previewFile(req, res) {
   const filePath = path.resolve("./tmp", req.params.file);
 
@@ -47,5 +53,6 @@ async function previewFile(req, res) {
 export default {
   generateKorektif,
   generatePreventif,
+  generateKalibrasi,
   previewFile,
 };

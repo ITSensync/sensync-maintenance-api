@@ -363,8 +363,18 @@ async function BAPreventif(body) {
   // return true; // for debugging
 }
 
-async function generateKalibrasi(data, site, tanggal) {
+async function generateKalibrasi(body) {
   try {
+    const data = body.kalibrasi;
+    const site = body.site;
+    const now = new Date();
+
+    const tanggal = new Intl.DateTimeFormat("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(now);
+
     const template = path.resolve("./templates/template_kalibrasi.xlsx");
 
     /* const filename = `kalibrasi_${site}_${tanggal}.xlsx`;
@@ -417,11 +427,11 @@ async function generateKalibrasi(data, site, tanggal) {
     // save TANPA merusak chart
     const fileBuffer = await workbook.outputAsync();
 
+    await odooService.mainProcess(fileBuffer, ["4. Kalibrasi & QC", site, tanggal], `kalibrasi_${site}_${tanggal}.xlsx`);
+
     return {
       status: 200,
-      success: true,
-      buffer: fileBuffer,
-      filename: `kalibrasi_${site}_${tanggal}.xlsx`,
+      message: "Success Generate Kalibrasi File",
     };
   }
   catch (error) {
