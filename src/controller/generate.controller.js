@@ -28,6 +28,18 @@ async function generatePreventif(req, res) {
   res.send(buffer); */
 }
 
+async function generateBulanan(req, res) {
+  const result = await generateService.BABulanan(req.body);
+
+  res.json(result);
+
+  /* res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `inline; filename="${filename}"`);
+  res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+
+  res.send(buffer); */
+}
+
 async function generateKalibrasi(req, res) {
   const result = await generateService.generateKalibrasi(req.body);
 
@@ -60,6 +72,7 @@ export default {
   generateKorektif,
   generatePreventif,
   generateKalibrasi,
+  generateBulanan,
   uploadDokumentasi,
   previewFile,
 };
