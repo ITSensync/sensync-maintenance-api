@@ -124,12 +124,26 @@ async function BAKorektif(body) {
 
   // UPLOAD TO ODOO
   let site = body.site;
-  if (site === "Sinar Sukses Mandiri") {
-    site = "SSM";
+  switch (site) {
+    case "Sinar Sukses Mandiri":
+      site = "SSM";
+      break;
+    case "Bintang Cipta Perkasa":
+      site = "BCP";
+      break;
+    case "Indorama Synthetics Div. Spinning":
+      site = "Spinning";
+      break;
+    case "Besland Pertiwi":
+      site = "Besland";
+      break;
+    case "Papyrus Sakti":
+      site = "Papyrus";
+      break;
+    default:
+      break;
   }
-  else if (site === "Bintang Cipta Perkasa") {
-    site = "BCP";
-  }
+
   const filename = `berita_acara_${site}_${fileDate}.pdf`;
 
   const resultOdoo = await odooService.mainProcess(pdfBuf, [`BA Pemeliharaan`, site, "Korektif"], filename);
@@ -321,11 +335,24 @@ async function BAPreventif(body) {
 
   // UPLOAD TO ODOO
   let site = body.site;
-  if (site === "Sinar Sukses Mandiri") {
-    site = "SSM";
-  }
-  else if (site === "Bintang Cipta Perkasa") {
-    site = "BCP";
+  switch (site) {
+    case "Sinar Sukses Mandiri":
+      site = "SSM";
+      break;
+    case "Bintang Cipta Perkasa":
+      site = "BCP";
+      break;
+    case "Indorama Synthetics Div. Spinning":
+      site = "Spinning";
+      break;
+    case "Besland Pertiwi":
+      site = "Besland";
+      break;
+    case "Papyrus Sakti":
+      site = "Papyrus";
+      break;
+    default:
+      break;
   }
   const filename = `berita_acara_${site}_${fileDate}.pdf`;
 
@@ -589,14 +616,24 @@ async function upload(files, body) {
     });
 
     let site = body.site;
-    if (site === "Sinar Sukses Mandiri") {
-      site = "SSM";
-    }
-    else if (site === "Bintang Cipta Perkasa") {
-      site = "BCP";
-    }
-    else if (site === "Indorama Synthetics Div. Spinning") {
-      site = "Spinning";
+    switch (site) {
+      case "Sinar Sukses Mandiri":
+        site = "SSM";
+        break;
+      case "Bintang Cipta Perkasa":
+        site = "BCP";
+        break;
+      case "Indorama Synthetics Div. Spinning":
+        site = "Spinning";
+        break;
+      case "Besland Pertiwi":
+        site = "Besland";
+        break;
+      case "Papyrus Sakti":
+        site = "Papyrus";
+        break;
+      default:
+        break;
     }
 
     const now = new Date();
