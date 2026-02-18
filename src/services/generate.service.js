@@ -532,8 +532,28 @@ async function BABulanan(body) {
 async function generateKalibrasi(body) {
   try {
     const data = body.kalibrasi;
-    const site = body.site;
     const now = new Date();
+
+    let site = body.site;
+    switch (site) {
+      case "Sinar Sukses Mandiri":
+        site = "SSM";
+        break;
+      case "Bintang Cipta Perkasa":
+        site = "BCP";
+        break;
+      case "Indorama Synthetics Div. Spinning":
+        site = "Spinning";
+        break;
+      case "Besland Pertiwi":
+        site = "Besland";
+        break;
+      case "Papyrus Sakti":
+        site = "Papyrus";
+        break;
+      default:
+        break;
+    }
 
     const tanggal = new Intl.DateTimeFormat("id-ID", {
       day: "numeric",
