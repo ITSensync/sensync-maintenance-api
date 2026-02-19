@@ -493,7 +493,26 @@ async function BABulanan(body) {
   // fs.writeFileSync(`./tmp/ba_korektif_${body.site}_${fileDate}.pdf`, pdfBuf);
 
   // UPLOAD TO ODOO
-  const site = body.site;
+  let site = body.site;
+  switch (site) {
+    case "Sinar Sukses Mandiri":
+      site = "SSM";
+      break;
+    case "Bintang Cipta Perkasa":
+      site = "BCP";
+      break;
+    case "Indorama Synthetics Div. Spinning":
+      site = "Spinning";
+      break;
+    case "Besland Pertiwi":
+      site = "Besland";
+      break;
+    case "Papyrus Sakti":
+      site = "Papyrus";
+      break;
+    default:
+      break;
+  }
   const filename = `berita_acara_${site}_${fileDate}.pdf`;
 
   const resultOdoo = await odooService.mainProcess(pdfBuf, [`BA Pemeliharaan`, site, "Preventif"], filename);
