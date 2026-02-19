@@ -164,13 +164,14 @@ async function BAKorektif(body) {
   } */
 
   // TEMPORARY FILE FOR PREVIEW
-  /* const id = crypto.randomUUID();
-  const previewName = `${id}.pdf`; */
-  fs.writeFileSync(`./tmp/${filename}`, pdfBuf);
+  const id = crypto.randomUUID();
+  const previewName = `${id}.pdf`;
+  const locationFile = `${filename}_${previewName}`;
+  fs.writeFileSync(`./tmp/${locationFile}`, pdfBuf);
 
   return {
     success: true,
-    url: `preview/${filename}`,
+    url: `preview/${locationFile}`,
   };
 
   /* return {
@@ -378,13 +379,14 @@ async function BAPreventif(body) {
   } */
 
   // TEMPORARY FILE FOR PREVIEW
-  /* const id = crypto.randomUUID();
-  const previewName = `${id}.pdf`; */
-  fs.writeFileSync(`./tmp/${filename}`, pdfBuf);
+  const id = crypto.randomUUID();
+  const previewName = `${id}.pdf`;
+  const locationFile = `${filename}_${previewName}`;
+  fs.writeFileSync(`./tmp/${locationFile}`, pdfBuf);
 
   return {
     success: true,
-    url: `preview/${filename}`,
+    url: `preview/${locationFile}`,
   };
 
   // return true; // for debugging
@@ -534,11 +536,14 @@ async function BABulanan(body) {
   // TEMPORARY FILE FOR PREVIEW
   /* const id = crypto.randomUUID();
   const previewName = `${id}.pdf`; */
-  fs.writeFileSync(`./tmp/${filename}`, pdfBuf);
+  const id = crypto.randomUUID();
+  const previewName = `${id}.pdf`;
+  const locationFile = `${filename}_${previewName}`;
+  fs.writeFileSync(`./tmp/${locationFile}`, pdfBuf);
 
   return {
     success: true,
-    url: `preview/${filename}`,
+    url: `preview/${locationFile}`,
   };
 
   /* return {
