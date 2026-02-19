@@ -164,13 +164,13 @@ async function BAKorektif(body) {
   } */
 
   // TEMPORARY FILE FOR PREVIEW
-  const id = crypto.randomUUID();
-  const previewName = `${id}.pdf`;
-  fs.writeFileSync(`./tmp/${previewName}`, pdfBuf);
+  /* const id = crypto.randomUUID();
+  const previewName = `${id}.pdf`; */
+  fs.writeFileSync(`./tmp/${filename}`, pdfBuf);
 
   return {
     success: true,
-    url: `preview/${previewName}`,
+    url: `preview/${filename}`,
   };
 
   /* return {
@@ -378,13 +378,13 @@ async function BAPreventif(body) {
   } */
 
   // TEMPORARY FILE FOR PREVIEW
-  const id = crypto.randomUUID();
-  const previewName = `${id}.pdf`;
-  fs.writeFileSync(`./tmp/${previewName}`, pdfBuf);
+  /* const id = crypto.randomUUID();
+  const previewName = `${id}.pdf`; */
+  fs.writeFileSync(`./tmp/${filename}`, pdfBuf);
 
   return {
     success: true,
-    url: `preview/${previewName}`,
+    url: `preview/${filename}`,
   };
 
   // return true; // for debugging
@@ -440,8 +440,7 @@ async function BABulanan(body) {
     ? JSON.parse(body.items)
     : [];
 
-  const items = itemsRaw.map((x, i) => ({
-    no: i + 1,
+  const items = itemsRaw.map((x, _i) => ({
     ...x,
   }));
 
@@ -515,7 +514,7 @@ async function BABulanan(body) {
   }
   const filename = `berita_acara_${site}_${fileDate}.pdf`;
 
-  const resultOdoo = await odooService.mainProcess(pdfBuf, [`BA Pemeliharaan`, site, "Preventif"], filename);
+  const resultOdoo = await odooService.mainProcess(pdfBuf, [`BA Pemeliharaan`, site, "Bulanan"], filename);
 
   // add to database
   await documentService.add({
@@ -533,13 +532,13 @@ async function BABulanan(body) {
   } */
 
   // TEMPORARY FILE FOR PREVIEW
-  const id = crypto.randomUUID();
-  const previewName = `${id}.pdf`;
-  fs.writeFileSync(`./tmp/${previewName}`, pdfBuf);
+  /* const id = crypto.randomUUID();
+  const previewName = `${id}.pdf`; */
+  fs.writeFileSync(`./tmp/${filename}`, pdfBuf);
 
   return {
     success: true,
-    url: `preview/${previewName}`,
+    url: `preview/${filename}`,
   };
 
   /* return {
