@@ -6,7 +6,7 @@ import { uploadDokumentasi } from "../middlewares/upload.middleware.js";
 const router = express.Router();
 
 router.post("/korektif", middlewares.verifyToken, uploadDokumentasi, generateController.generateKorektif);
-router.post("/preventif", middlewares.verifyToken, uploadDokumentasi, generateController.generatePreventif);
+router.post("/preventif/:type", middlewares.verifyToken, uploadDokumentasi, generateController.generatePreventif);
 router.post("/kalibrasi", middlewares.verifyToken, generateController.generateKalibrasi);
 router.post("/bulanan", middlewares.verifyToken, uploadDokumentasi, generateController.generateBulanan);
 router.post("/dokumentasi", middlewares.verifyToken, uploadDokumentasi, generateController.uploadDokumentasi);
