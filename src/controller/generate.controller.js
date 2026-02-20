@@ -47,6 +47,13 @@ async function generateBulanan(req, res) {
   res.send(buffer); */
 }
 
+async function generateBAST(req, res) {
+  const type = req.params.type?.toString().toUpperCase();
+  const result = await generateService.BAST(req.body, type);
+
+  res.json(result);
+}
+
 async function generateKalibrasi(req, res) {
   const result = await generateService.generateKalibrasi(req.body);
 
@@ -80,6 +87,7 @@ export default {
   generatePreventif,
   generateKalibrasi,
   generateBulanan,
+  generateBAST,
   uploadDokumentasi,
   previewFile,
 };
