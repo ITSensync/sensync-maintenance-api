@@ -1,8 +1,11 @@
+/* eslint-disable node/no-process-env */
 /* eslint-disable node/prefer-global/buffer */
 import fs from "node:fs";
 import path from "node:path";
 import Docxtemplater from "docxtemplater";
 import ImageModule from "docxtemplater-image-module-free";
+import { JWT } from "google-auth-library";
+import { GoogleSpreadsheet } from "google-spreadsheet";
 // import ExcelJS from "exceljs";
 import libre from "libreoffice-convert";
 import PizZip from "pizzip";
@@ -11,8 +14,34 @@ import documentService from "./document.service.js";
 import odooService from "./odoo.service.js";
 
 const PARAF_PATH = "./templates/paraf_korektif.png";
+const serviceAccountAuth = new JWT({
+  email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+  key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+  scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+});
 
 async function BAKorektif(body) {
+  let site = body.site;
+  switch (site) {
+    case "Sinar Sukses Mandiri":
+      site = "SSM";
+      break;
+    case "Bintang Cipta Perkasa":
+      site = "BCP";
+      break;
+    case "Indorama Synthetics Div. Spinning":
+      site = "Spinning";
+      break;
+    case "Besland Pertiwi":
+      site = "Besland";
+      break;
+    case "Papyrus Sakti":
+      site = "Papyrus";
+      break;
+    default:
+      break;
+  }
+
   const content = fs.readFileSync("./templates/template_korektif.docx", "binary");
   const imageModule = new ImageModule({
     getImage(tagValue) {
@@ -84,6 +113,13 @@ async function BAKorektif(body) {
     year: "numeric",
   }).format(now);
 
+  /* SENT TO CPI SHEET */
+  await inputCPISpreadsheet({
+    tanggal: toGoogleSheetsDate(),
+    site,
+    actualDuration: hitungDurasi(body.start_time, body.end_time),
+  }, "Corrective");
+
   doc.render({
     nomor_ba: body.nomor_ba,
     site: body.site,
@@ -123,27 +159,6 @@ async function BAKorektif(body) {
   // fs.writeFileSync(`./tmp/ba_korektif_${body.site}_${fileDate}.pdf`, pdfBuf);
 
   // UPLOAD TO ODOO
-  let site = body.site;
-  switch (site) {
-    case "Sinar Sukses Mandiri":
-      site = "SSM";
-      break;
-    case "Bintang Cipta Perkasa":
-      site = "BCP";
-      break;
-    case "Indorama Synthetics Div. Spinning":
-      site = "Spinning";
-      break;
-    case "Besland Pertiwi":
-      site = "Besland";
-      break;
-    case "Papyrus Sakti":
-      site = "Papyrus";
-      break;
-    default:
-      break;
-  }
-
   const filename = `berita_acara_${site}_${fileDate}.pdf`;
 
   const resultOdoo = await odooService.mainProcess(pdfBuf, [`BA Pemeliharaan`, site, "Korektif"], filename);
@@ -178,12 +193,34 @@ async function BAKorektif(body) {
     buffer: pdfBuf,
     filename: `ba_korektif_${body.site}_${fileDate}.pdf`,
   }; */
+  // return true;
 }
 
 async function BAPreventif(body) {
   Object.keys(body).forEach((key) => {
     body[key] = parseJSON(body[key]);
   });
+
+  let site = body.site;
+  switch (site) {
+    case "Sinar Sukses Mandiri":
+      site = "SSM";
+      break;
+    case "Bintang Cipta Perkasa":
+      site = "BCP";
+      break;
+    case "Indorama Synthetics Div. Spinning":
+      site = "Spinning";
+      break;
+    case "Besland Pertiwi":
+      site = "Besland";
+      break;
+    case "Papyrus Sakti":
+      site = "Papyrus";
+      break;
+    default:
+      break;
+  }
 
   const content = fs.readFileSync("./templates/template_preventif.docx", "binary");
   const imageModule = new ImageModule({
@@ -245,6 +282,13 @@ async function BAPreventif(body) {
     month: "long",
     year: "numeric",
   }).format(now);
+
+  /* SENT TO CPI SHEET */
+  await inputCPISpreadsheet({
+    tanggal: toGoogleSheetsDate(),
+    site,
+    actualDuration: hitungDurasi(body.start_time, body.end_time),
+  }, "Preventive");
 
   /* CONVERT INPUT SEBELUM/SESUDAH */
   const statusIcon = (val) => {
@@ -335,26 +379,6 @@ async function BAPreventif(body) {
   // fs.writeFileSync(`./tmp/ba_korektif_${body.site}_${fileDate}.pdf`, pdfBuf); //for debugging
 
   // UPLOAD TO ODOO
-  let site = body.site;
-  switch (site) {
-    case "Sinar Sukses Mandiri":
-      site = "SSM";
-      break;
-    case "Bintang Cipta Perkasa":
-      site = "BCP";
-      break;
-    case "Indorama Synthetics Div. Spinning":
-      site = "Spinning";
-      break;
-    case "Besland Pertiwi":
-      site = "Besland";
-      break;
-    case "Papyrus Sakti":
-      site = "Papyrus";
-      break;
-    default:
-      break;
-  }
   const filename = `berita_acara_${site}_${fileDate}.pdf`;
 
   const resultOdoo = await odooService.mainProcess(pdfBuf, [`BA Pemeliharaan`, site, "Preventif"], filename);
@@ -1048,6 +1072,69 @@ async function previewFile(filename) {
   return { filePath: `./tmp/${filename}` };
 }
 
+async function inputCPISpreadsheet(data, type) {
+  try {
+    const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEET_CPI_ID, serviceAccountAuth);
+    await doc.loadInfo();
+
+    // Generate nama sheet sesuai bulan & tahun sekarang
+    const now = new Date();
+    const sheetName = new Intl.DateTimeFormat("id-ID", {
+      month: "long",
+      year: "numeric",
+    }).format(now);
+
+    const sheet = doc.sheetsByTitle[`CPI ${sheetName} Test`];
+
+    await sheet.loadHeaderRow(3);
+    const rows = await sheet.getRows();
+
+    const lastRow = rows.filter(row => row.get("No")).length;
+    const nextNo = lastRow + 1;
+
+    await sheet.addRow({
+      "No": nextNo,
+      "Tanggal": data.tanggal,
+      "Site": data.site,
+      "Maintenance": type,
+      "Jenis Maintenance": data.jenisMaintenance,
+      "Planned Duration (jam)": 3,
+      "Actual Duration (jam)": data.actualDuration,
+    });
+
+    return {
+      status: 200,
+      message: "Success input data",
+    };
+  }
+  catch (error) {
+    console.log(error);
+    return {
+      status: 500,
+      message: error,
+    };
+  }
+}
+
+function hitungDurasi(start_time, end_time) {
+  const [startJam, startMenit, startDetik] = start_time.split(":").map(Number);
+  const [endJam, endMenit, endDetik] = end_time.split(":").map(Number);
+
+  const startTotal = startJam * 3600 + startMenit * 60 + startDetik;
+  const endTotal = endJam * 3600 + endMenit * 60 + endDetik;
+
+  const selisihDetik = endTotal - startTotal;
+  const durasi = selisihDetik / 3600;
+
+  return Number.parseFloat(durasi.toFixed(1));
+}
+
+function toGoogleSheetsDate(date = new Date()) {
+  const startDate = new Date(1899, 11, 30);
+  const diff = Math.floor((date - startDate) / (1000 * 60 * 60 * 24));
+  return diff;
+}
+
 function parseJSON(val) {
   try {
     return JSON.parse(val);
@@ -1066,4 +1153,5 @@ export default {
   previewFile,
   generateKalibrasi,
   upload,
+  inputCPISpreadsheet,
 };

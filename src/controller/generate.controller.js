@@ -82,6 +82,12 @@ async function previewFile(req, res) {
   });
 }
 
+async function inputCPI(req, res) {
+  const result = await generateService.inputCPISpreadsheet(req.body);
+
+  res.status(result.status).send(result);
+}
+
 export default {
   generateKorektif,
   generatePreventif,
@@ -90,4 +96,5 @@ export default {
   generateBAST,
   uploadDokumentasi,
   previewFile,
+  inputCPI,
 };
