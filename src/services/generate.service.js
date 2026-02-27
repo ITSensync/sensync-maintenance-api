@@ -1084,7 +1084,31 @@ async function inputCPISpreadsheet(data, type) {
       year: "numeric",
     }).format(now);
 
-    const sheet = doc.sheetsByTitle[`CPI ${sheetName} Test`];
+    let sheet = doc.sheetsByTitle[`CPI ${sheetName}`];
+
+    if (!sheet) {
+      sheet = await doc.addSheet({ title: `CPI ${sheetName}` });
+
+      await sheet.loadCells("A3:G3");
+
+      const headers = ["No", "Tanggal", "Site", "Maintenance", "Jenis Maintenance", "Planned Duration (jam)", "Actual Duration (jam)"];
+
+      headers.forEach((header, i) => {
+        const cell = sheet.getCell(2, i); // row index 2 = baris ke-3
+        cell.value = header;
+      });
+
+      await sheet.loadCells("B4:B1000");
+      for (let i = 4; i < 1000; i++) {
+        const cell = sheet.getCell(i, 1); // kolom B
+        cell.numberFormat = {
+          type: "DATE",
+          pattern: "mm/dd/yyyy",
+        };
+      }
+
+      await sheet.saveUpdatedCells();
+    }
 
     await sheet.loadHeaderRow(3);
     const rows = await sheet.getRows();
@@ -1117,14 +1141,14 @@ async function inputCPISpreadsheet(data, type) {
 }
 
 function hitungDurasi(start_time, end_time) {
-  const [startJam, startMenit, startDetik] = start_time.split(":").map(Number);
-  const [endJam, endMenit, endDetik] = end_time.split(":").map(Number);
+  const [startJam, startMenit] = start_time.split(":").map(Number);
+  const [endJam, endMenit] = end_time.split(":").map(Number);
 
-  const startTotal = startJam * 3600 + startMenit * 60 + startDetik;
-  const endTotal = endJam * 3600 + endMenit * 60 + endDetik;
+  const startTotal = startJam * 60 + startMenit;
+  const endTotal = endJam * 60 + endMenit;
 
-  const selisihDetik = endTotal - startTotal;
-  const durasi = selisihDetik / 3600;
+  const selisihMenit = endTotal - startTotal;
+  const durasi = selisihMenit / 60;
 
   return Number.parseFloat(durasi.toFixed(1));
 }
