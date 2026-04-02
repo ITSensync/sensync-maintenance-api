@@ -959,7 +959,7 @@ async function generateKalibrasi(body) {
         continue;
 
       const sheet = workbook.sheet(mapping[key]);
-      const formulaCols = ["C", "D", "E", "F", "G"]; // kolom dengan rumus
+      const formulaCols = ["D", "E", "F", "G"]; // kolom dengan rumus
       const startRow = 3;
       const dataRows = data[key].length;
       const lastDataRow = startRow + dataRows - 1; // baris terakhir untuk data, sebelum Average
@@ -967,9 +967,12 @@ async function generateKalibrasi(body) {
       data[key].forEach((item, index) => {
         const row = startRow + index;
 
+        const regresion = linearRegression(data[key]);
+
         // isi data kolom A & B
         sheet.cell(`A${row}`).value(Number(item.larutan));
         sheet.cell(`B${row}`).value(Number(item.nilai));
+        sheet.cell(`C${row}`).formula(`(B${row} - ${regresion.b}) / ${regresion.a}`);
 
         // copy rumus dari baris 3 ke baris data baru, hanya ganti nomor baris
         formulaCols.forEach((col) => {
@@ -1157,6 +1160,33 @@ function toGoogleSheetsDate(date = new Date()) {
   const startDate = new Date(1899, 11, 30);
   const diff = Math.floor((date - startDate) / (1000 * 60 * 60 * 24));
   return diff;
+}
+
+function linearRegression(data) {
+  const n = data.length;
+
+  let sumX = 0;
+  let sumY = 0;
+  let sumXY = 0;
+  let sumX2 = 0;
+
+  data.forEach((item) => {
+    const x = Number(item.larutan);
+    const y = Number(item.nilai);
+
+    sumX += x;
+    sumY += y;
+    sumXY += x * y;
+    sumX2 += x * x;
+  });
+
+  const a
+    = (n * sumXY - sumX * sumY)
+      / (n * sumX2 - sumX * sumX);
+
+  const b = (sumY - a * sumX) / n;
+
+  return { a, b };
 }
 
 function parseJSON(val) {
