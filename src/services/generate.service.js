@@ -381,7 +381,7 @@ async function BAPreventif(body) {
   // UPLOAD TO ODOO
   const filename = `berita_acara_${site}_${fileDate}.pdf`;
 
-  const resultOdoo = await odooService.mainProcess(pdfBuf, [`BA Pemeliharaan`, site, "Preventif"], filename);
+  const resultOdoo = await odooService.mainProcess(pdfBuf, [`Berita Acara`, site, "Preventif"], filename);
 
   // GENERATE KALIBRASI
   /* const result = await generateKalibrasi(body.kalibrasi, site, fileDate);
