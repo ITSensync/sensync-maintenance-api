@@ -1473,7 +1473,7 @@ async function generateReportKalibrasi(
 
     const filename = `kalibrasi_${site}_${tanggalFormatted}.docx`;
 
-    fs.writeFileSync(`./tmp/${filename}`, docxBuffer);
+    // fs.writeFileSync(`./tmp/${filename}`, docxBuffer);
 
     return {
       filename,
