@@ -1400,7 +1400,7 @@ async function generateReportKalibrasi(
       },
 
       getSize() {
-        return [400, 220];
+        return [600, 400];
       },
     });
 
@@ -1412,9 +1412,9 @@ async function generateReportKalibrasi(
 
     const nh3nRegressionRows = safe.nh3n.rows.length > 1;
     const regressionCharts = {
-      cod_chart: await generateRegressionChart(safe.cod.rows, "COD Regression", "Standar (mg/L)", "COD (mg/L)"),
-      ph_chart: await generateRegressionChart(safe.ph.rows, "pH Regression", "Standar", "pH"),
-      nh3n_chart: await generateRegressionChart(safe.nh3n.rows, "NH3N Regression", "Standar (mg/L)", "NH3N (mg/L)"),
+      cod_chart: await generateRegressionChart(safe.cod.rows, "COD", "Standar (mg/L)", "COD (mg/L)"),
+      ph_chart: await generateRegressionChart(safe.ph.rows, "PH", "Standar (mg/L)", "pH (mg/L)"),
+      nh3n_chart: await generateRegressionChart(safe.nh3n.rows, "NH3N", "Standar (mg/L)", "NH3N (mg/L)"),
     };
 
     fs.writeFileSync(COD_GRAPH_PATH, regressionCharts.cod_chart);
@@ -1473,7 +1473,7 @@ async function generateReportKalibrasi(
 
     const filename = `kalibrasi_${site}_${tanggalFormatted}.docx`;
 
-    // fs.writeFileSync(`./tmp/${filename}`, docxBuffer);
+    fs.writeFileSync(`./tmp/${filename}`, docxBuffer);
 
     return {
       filename,
