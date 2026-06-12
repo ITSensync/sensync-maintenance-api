@@ -32,6 +32,7 @@ app.use(helmet());
 app.use(cors({
   origin: "*", // frontend kamu
   credentials: false,
+  exposedHeaders: ["Content-Disposition"],
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

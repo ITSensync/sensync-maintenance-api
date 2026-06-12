@@ -2,6 +2,7 @@
 /* eslint-disable node/prefer-global/buffer */
 import fs from "node:fs";
 import path from "node:path";
+import { ChartJSNodeCanvas } from "chartjs-node-canvas";
 import Docxtemplater from "docxtemplater";
 import ImageModule from "docxtemplater-image-module-free";
 import { JWT } from "google-auth-library";
@@ -11,13 +12,26 @@ import libre from "libreoffice-convert";
 import PizZip from "pizzip";
 import XlsxPopulate from "xlsx-populate";
 import documentService from "./document.service.js";
+import excelParserService from "./excel-parser.service.js";
 import odooService from "./odoo.service.js";
 
 const PARAF_PATH = "./templates/paraf_korektif.png";
+const COD_GRAPH_PATH = "./tmp/cod_chart.png";
+const PH_GRAPH_PATH = "./tmp/ph_chart.png";
+const NH3N_GRAPH_PATH = "./tmp/nh3n_chart.png";
 const serviceAccountAuth = new JWT({
   email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
   key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+});
+
+const chartCanvas = new ChartJSNodeCanvas({
+  width: 800,
+  height: 500,
+  backgroundColour: "white",
+  plugins: {
+    modern: ["chartjs-plugin-annotation"], // ✅ register di sini
+  },
 });
 
 async function BAKorektif(body) {
@@ -1135,12 +1149,462 @@ async function inputCPISpreadsheet(data, type) {
     };
   }
   catch (error) {
-    console.log(error);
+    console.error(error);
     return {
       status: 500,
       message: error,
     };
   }
+}
+
+function formatTwoDecimals(value) {
+  if (value === null || value === undefined || value === "") {
+    return "";
+  }
+
+  const numericValue = Number(value);
+
+  return Number.isFinite(numericValue)
+    ? numericValue.toFixed(2)
+    : value;
+}
+
+function normalizePercent(value) {
+  if (value === null || value === undefined || value === "") {
+    return "";
+  }
+
+  const numericValue = Number(value);
+
+  if (!Number.isFinite(numericValue)) {
+    return value;
+  }
+
+  const percentValue = Math.abs(numericValue * 100);
+
+  return percentValue.toFixed(2);
+}
+
+function shouldFormatRowValue(fieldName) {
+  return !["COD", "pH", "NH3N", "TSS", "cod", "ph", "nh3n", "tss"].includes(fieldName);
+}
+
+function pickSummaryValue(item = {}, aliases = []) {
+  return aliases
+    .map(alias => item?.[alias])
+    .find(value => value !== undefined && value !== null && value !== "");
+}
+
+function getPersamaanValue(item = {}) {
+  return formatTwoDecimals(pickSummaryValue(item, ["persamaan", "Persamaan"]));
+}
+
+function getR2Value(item = {}) {
+  return formatTwoDecimals(pickSummaryValue(item, ["r2", "R2"]));
+}
+
+function getSensitivitasValue(item = {}) {
+  return normalizePercent(pickSummaryValue(item, ["sensitivitas", "Sensitivitas"]));
+}
+
+function getBiasSebelumValue(item = {}) {
+  return normalizePercent(pickSummaryValue(item, ["biasSebelum", "Bias", "bias"]));
+}
+
+function getBiasSesudahValue(item = {}) {
+  return normalizePercent(pickSummaryValue(item, ["biasSesudah", "Bias_1", "bias_1"]));
+}
+
+function getAkurasiValue(item = {}) {
+  return normalizePercent(pickSummaryValue(item, ["akurasi", "Akurasi", "akurasi_1", "Akurasi_1"]));
+}
+
+function getRegressionSummary(rows = []) {
+  const validRows = (rows ?? []).filter((item) => {
+    const x = item?.COD
+      ?? item?.cod
+      ?? item?.pH
+      ?? item?.ph
+      ?? item?.NH3N
+      ?? item?.nh3n
+      ?? item?.TSS
+      ?? item?.tss
+      ?? item?.larutan
+      ?? item?.Larutan;
+
+    const y = item?.Sensor
+      ?? item?.sensor
+      ?? item?.nilai
+      ?? item?.Nilai;
+
+    return x !== undefined && x !== "" && y !== undefined && y !== "";
+  });
+
+  if (validRows.length < 2) {
+    return {
+      persamaan: "",
+      r2: "",
+      sensitivitas: "",
+    };
+  }
+
+  const regression = linearRegression(validRows.map(item => ({
+    larutan: item?.COD ?? item?.cod ?? item?.pH ?? item?.ph ?? item?.NH3N ?? item?.nh3n ?? item?.TSS ?? item?.tss ?? item?.larutan ?? item?.Larutan,
+    nilai: item?.Sensor ?? item?.sensor ?? item?.nilai ?? item?.Nilai,
+  })));
+
+  const yValues = validRows.map(item => Number(item?.Sensor ?? item?.sensor ?? item?.nilai ?? item?.Nilai));
+  const yMean = yValues.reduce((sum, value) => sum + value, 0) / yValues.length;
+
+  const ssRes = validRows.reduce((sum, item) => {
+    const x = Number(item?.COD ?? item?.cod ?? item?.pH ?? item?.ph ?? item?.NH3N ?? item?.nh3n ?? item?.TSS ?? item?.tss ?? item?.larutan ?? item?.Larutan);
+    const y = Number(item?.Sensor ?? item?.sensor ?? item?.nilai ?? item?.Nilai);
+    const predicted = regression.a * x + regression.b;
+
+    return sum + (y - predicted) ** 2;
+  }, 0);
+
+  const ssTot = yValues.reduce((sum, value) => sum + (value - yMean) ** 2, 0);
+  const r2 = ssTot === 0 ? 1 : 1 - (ssRes / ssTot);
+
+  return {
+    persamaan: `y = ${formatTwoDecimals(regression.a)}x + ${formatTwoDecimals(regression.b)}`,
+    r2: formatTwoDecimals(Math.max(0, Math.min(1, r2))),
+    sensitivitas: formatTwoDecimals(regression.a),
+  };
+}
+
+function normalizeKalibrasiData(dataKalibrasi = {}) {
+  const aliases = {
+    cod: ["cod", "COD"],
+    ph: ["ph", "pH"],
+    nh3n: ["nh3n", "NH3N"],
+    tss: ["tss", "TSS"],
+  };
+
+  const normalized = {};
+
+  for (const [key, names] of Object.entries(aliases)) {
+    const rawValue = names
+      .map(name => dataKalibrasi[name])
+      .find(value => value !== undefined);
+
+    const source = rawValue ?? dataKalibrasi[key] ?? [];
+
+    if (Array.isArray(source)) {
+      const rows = source.slice(0, -1);
+
+      let lastItem = {};
+      if (key === "tss") {
+        lastItem = source[source.length - 2] ?? {};
+      }
+      else {
+        lastItem = source[source.length - 1] ?? {};
+      }
+
+      const regressionSummary = getRegressionSummary(rows);
+
+      normalized[key] = {
+        rows: rows.map(item => Object.fromEntries(
+          Object.entries(item).map(([field, value]) => [field, shouldFormatRowValue(field) ? formatTwoDecimals(value) : value]),
+        )),
+        persamaan: regressionSummary.persamaan || getPersamaanValue(lastItem),
+        r2: regressionSummary.r2 || getR2Value(lastItem),
+        sensitivitas: regressionSummary.sensitivitas || getSensitivitasValue(lastItem),
+        biasSebelum: getBiasSebelumValue(lastItem),
+        biasSesudah: getBiasSesudahValue(lastItem),
+        akurasi: getAkurasiValue(lastItem),
+      };
+      continue;
+    }
+
+    // const rows = (source?.rows ?? source?.Rows ?? source)?.slice(0, -1) ?? [];
+
+    // normalized[key] = {
+    //   ...(source ?? {}),
+    //   rows: rows.map(item => Object.fromEntries(
+    //     Object.entries(item).map(([field, value]) => [field, shouldFormatRowValue(field) ? formatTwoDecimals(value) : value]),
+    //   )),
+    //   persamaan: formatTwoDecimals(source?.persamaan ?? source?.Persamaan ?? ""),
+    //   r2: formatTwoDecimals(source?.r2 ?? source?.R2 ?? ""),
+    //   sensitivitas: normalizePercent(source?.sensitivitas ?? source?.Sensitivitas ?? ""),
+    //   biasSebelum: normalizePercent(source?.biasSebelum ?? source?.Bias ?? source?.bias ?? ""),
+    //   biasSesudah: normalizePercent(source?.biasSesudah ?? source?.Bias_1 ?? source?.bias_1 ?? ""),
+    //   akurasi: normalizePercent(source?.akurasi ?? source?.Akurasi ?? ""),
+    // };
+  }
+
+  return normalized;
+}
+
+async function generateReportKalibrasi(
+  fileExcel,
+  site,
+  tanggalKalibrasi,
+) {
+  try {
+    switch (site) {
+      case "Sinar Sukses Mandiri":
+        site = "SSM";
+        break;
+      case "Bintang Cipta Perkasa":
+        site = "BCP";
+        break;
+      case "Indorama Synthetics Div. Spinning":
+        site = "Spinning";
+        break;
+      case "Besland Pertiwi":
+        site = "Besland";
+        break;
+      case "Papyrus Sakti":
+        site = "Papyrus";
+        break;
+      default:
+        break;
+    }
+
+    const tanggalFormatted = new Intl.DateTimeFormat("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(new Date(tanggalKalibrasi));
+
+    const rawKalibrasi = await excelParserService.parseKalibrasiExcel(fileExcel);
+    const dataKalibrasi = normalizeKalibrasiData(rawKalibrasi);
+
+    const safe = {
+      cod: dataKalibrasi.cod ?? {},
+      ph: dataKalibrasi.ph ?? {},
+      nh3n: dataKalibrasi.nh3n ?? {},
+      tss: dataKalibrasi.tss ?? {},
+    };
+
+    // template word
+    const content = fs.readFileSync(
+      "./templates/template_report_kalibrasi.docx",
+      "binary",
+    );
+
+    const zip = new PizZip(content);
+    const imageModule = new ImageModule({
+      getImage(tagValue) {
+        if (tagValue === COD_GRAPH_PATH) {
+          return fs.readFileSync(COD_GRAPH_PATH);
+        }
+        if (tagValue === PH_GRAPH_PATH) {
+          return fs.readFileSync(PH_GRAPH_PATH);
+        }
+        if (tagValue === NH3N_GRAPH_PATH) {
+          return fs.readFileSync(NH3N_GRAPH_PATH);
+        }
+      },
+
+      getSize() {
+        return [400, 220];
+      },
+    });
+
+    const doc = new Docxtemplater(zip, {
+      modules: [imageModule],
+      paragraphLoop: true,
+      linebreaks: true,
+    });
+
+    const nh3nRegressionRows = safe.nh3n.rows.length > 1;
+    const regressionCharts = {
+      cod_chart: await generateRegressionChart(safe.cod.rows, "COD Regression", "Standar (mg/L)", "COD (mg/L)"),
+      ph_chart: await generateRegressionChart(safe.ph.rows, "pH Regression", "Standar", "pH"),
+      nh3n_chart: await generateRegressionChart(safe.nh3n.rows, "NH3N Regression", "Standar (mg/L)", "NH3N (mg/L)"),
+    };
+
+    fs.writeFileSync(COD_GRAPH_PATH, regressionCharts.cod_chart);
+    fs.writeFileSync(PH_GRAPH_PATH, regressionCharts.ph_chart);
+    if (nh3nRegressionRows) {
+      fs.writeFileSync(NH3N_GRAPH_PATH, regressionCharts.nh3n_chart);
+    }
+
+    doc.render({
+      site: site.toUpperCase(),
+      tanggal: tanggalFormatted,
+
+      // COD
+      cod_rows: safe.cod.rows ?? [],
+      cod_persamaan: safe.cod.persamaan ?? "",
+      cod_r2: safe.cod.r2 ?? "",
+      cod_sensitivitas: safe.cod.sensitivitas ?? "",
+      cod_bias_sebelum: safe.cod.biasSebelum ?? "",
+      cod_bias_sesudah: safe.cod.biasSesudah ?? "",
+      cod_akurasi: safe.cod.akurasi ?? "",
+      cod_chart: COD_GRAPH_PATH,
+
+      // PH
+      ph_rows: safe.ph.rows ?? [],
+      ph_persamaan: safe.ph.persamaan ?? "",
+      ph_r2: safe.ph.r2 ?? "",
+      ph_sensitivitas: safe.ph.sensitivitas ?? "",
+      ph_bias_sebelum: safe.ph.biasSebelum ?? "",
+      ph_bias_sesudah: safe.ph.biasSesudah ?? "",
+      ph_akurasi: safe.ph.akurasi ?? "",
+      ph_chart: PH_GRAPH_PATH,
+
+      // NH3N
+      nh3n_rows: safe.nh3n.rows ?? [],
+      showNh3nRegression: nh3nRegressionRows,
+      nh3n_persamaan: safe.nh3n.persamaan ?? "",
+      nh3n_r2: safe.nh3n.r2 ?? "",
+      nh3n_sensitivitas: safe.nh3n.sensitivitas ?? "",
+      nh3n_bias_sebelum: safe.nh3n.biasSebelum ?? "",
+      nh3n_bias_sesudah: safe.nh3n.biasSesudah ?? "",
+      nh3n_akurasi: safe.nh3n.akurasi ?? "",
+      nh3n_chart: nh3nRegressionRows ? NH3N_GRAPH_PATH : null,
+
+      // TSS
+      tss_rows: safe.tss.rows ?? [],
+      tss_bias_sebelum: safe.tss.biasSebelum ?? "",
+      tss_bias_sesudah: safe.tss.biasSesudah ?? "",
+      tss_akurasi: safe.tss.akurasi ?? "",
+
+    });
+
+    const docxBuffer = doc.toBuffer();
+
+    // const fileDate = dayjs()
+    //   .format("DD-MM-YYYY");
+
+    const filename = `kalibrasi_${site}_${tanggalFormatted}.docx`;
+
+    // fs.writeFileSync(`./tmp/${filename}`, docxBuffer);
+
+    return {
+      filename,
+      buffer: docxBuffer,
+    };
+  }
+  catch (error) {
+    console.error("generateReportKalibrasi error:", error);
+
+    return {
+      status: 500,
+      message: error.message ?? "Gagal membuat dokumen kalibrasi.",
+    };
+  }
+}
+
+export async function generateRegressionChart(rows, label = "Regression", xLabel = "Standar (mg/L)", yLabel = "Nilai") {
+  const points = rows
+    .map(extractRegressionPoint)
+    .filter(p => Number.isFinite(p.x) && Number.isFinite(p.y));
+
+  if (points.length < 2)
+    return null;
+
+  const regression = linearRegression(points.map(p => ({ larutan: p.x, nilai: p.y })));
+
+  const minX = Math.min(...points.map(p => p.x));
+  const maxX = Math.max(...points.map(p => p.x));
+
+  // Hitung R²
+  const yValues = points.map(p => p.y);
+  const yMean = yValues.reduce((sum, v) => sum + v, 0) / yValues.length;
+  const ssRes = points.reduce((sum, p) => sum + (p.y - (regression.a * p.x + regression.b)) ** 2, 0);
+  const ssTot = yValues.reduce((sum, v) => sum + (v - yMean) ** 2, 0);
+  const r2 = ssTot === 0 ? 1 : Math.max(0, Math.min(1, 1 - ssRes / ssTot));
+
+  const lineData = [
+    { x: minX, y: regression.a * minX + regression.b },
+    { x: maxX, y: regression.a * maxX + regression.b },
+  ];
+
+  // Format label persamaan
+  const sign = regression.b >= 0 ? "+" : "-";
+  const equationText = `y = ${regression.a.toFixed(4)}x ${sign} ${Math.abs(regression.b).toFixed(2)}`;
+  const r2Text = `R² = ${r2.toFixed(4)}`;
+
+  const config = {
+    type: "scatter",
+    data: {
+      datasets: [
+        {
+          label: "Data Sensor",
+          data: points,
+          pointRadius: 5,
+          backgroundColor: "rgba(54, 162, 235, 0.7)",
+        },
+        {
+          label: "Regression Line",
+          data: lineData,
+          type: "line",
+          borderColor: "rgba(54, 162, 235, 1)",
+          borderWidth: 2,
+          borderDash: [5, 3],
+          pointRadius: 0,
+          fill: false,
+        },
+      ],
+    },
+    options: {
+      responsive: false,
+      plugins: {
+        title: {
+          display: true,
+          text: label,
+          font: { size: 16 },
+        },
+        legend: {
+          display: false, // sembunyikan legend biar mirip Excel
+        },
+        // ✅ Annotation persamaan & R²
+        annotation: {
+          annotations: {
+            equationLabel: {
+              type: "label",
+              xScaleID: "x",
+              yScaleID: "y",
+              xValue: maxX,
+              yValue: regression.a * maxX + regression.b,
+              xAdjust: -80, // geser kiri supaya tidak terpotong
+              yAdjust: 30,
+              content: [equationText, r2Text],
+              font: { size: 12 },
+              textAlign: "center",
+              color: "black",
+              backgroundColor: "rgba(255,255,255,0.7)",
+              padding: 4,
+            },
+          },
+        },
+      },
+      scales: {
+        x: { title: { display: true, text: xLabel }, min: 0 },
+        y: { title: { display: true, text: yLabel } }, // ✅ pakai parameter
+      },
+    },
+  };
+
+  return await chartCanvas.renderToBuffer(config);
+}
+
+function extractRegressionPoint(item = {}) {
+  const x = item?.COD
+    ?? item?.cod
+    ?? item?.pH
+    ?? item?.ph
+    ?? item?.NH3N
+    ?? item?.nh3n
+    ?? item?.TSS
+    ?? item?.tss
+    ?? item?.larutan
+    ?? item?.Larutan;
+
+  const y = item?.Sensor
+    ?? item?.sensor
+    ?? item?.nilai
+    ?? item?.Nilai;
+
+  return {
+    x: Number(x),
+    y: Number(y),
+  };
 }
 
 function hitungDurasi(start_time, end_time) {
@@ -1206,6 +1670,8 @@ export default {
   BAST,
   previewFile,
   generateKalibrasi,
+  generateReportKalibrasi,
+  normalizeKalibrasiData,
   upload,
   inputCPISpreadsheet,
 };

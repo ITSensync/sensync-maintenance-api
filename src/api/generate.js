@@ -1,7 +1,7 @@
 import express from "express";
 import generateController from "../controller/generate.controller.js";
 import * as middlewares from "../middlewares.js";
-import { uploadDokumentasi } from "../middlewares/upload.middleware.js";
+import { uploadDokumentasi, uploadKalibrasi } from "../middlewares/upload.middleware.js";
 
 const router = express.Router();
 
@@ -13,5 +13,11 @@ router.post("/serah-terima/:type", middlewares.verifyToken, uploadDokumentasi, g
 router.post("/dokumentasi", middlewares.verifyToken, uploadDokumentasi, generateController.uploadDokumentasi);
 router.get("/preview/:file", uploadDokumentasi, generateController.previewFile);
 router.post("/cpi", generateController.inputCPI);
+router.post(
+  "/report-kalibrasi",
+  middlewares.verifyToken,
+  uploadKalibrasi,
+  generateController.generateReportKalibrasi,
+);
 
 export default router;

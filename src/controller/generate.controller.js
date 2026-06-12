@@ -88,10 +88,37 @@ async function inputCPI(req, res) {
   res.status(result.status).send(result);
 }
 
+async function generateReportKalibrasi(req, res) {
+  if (!req.file) {
+    return res.status(400).json({
+      status: 400,
+      message: "File kalibrasi wajib diunggah.",
+    });
+  }
+
+  const result = await generateService.generateReportKalibrasi(
+    req.file,
+    req.body.site ?? "",
+    req.body.tanggal ?? req.body.tanggalKalibrasi ?? "",
+  );
+
+  if (result.status === 500) {
+    return res.status(500).json({
+      status: 500,
+      message: result.message,
+    });
+  }
+
+  res.setHeader("Content-Disposition", `attachment; filename="${result.filename}"`);
+  res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+  return res.send(result.buffer);
+}
+
 export default {
   generateKorektif,
   generatePreventif,
   generateKalibrasi,
+  generateReportKalibrasi,
   generateBulanan,
   generateBAST,
   uploadDokumentasi,
