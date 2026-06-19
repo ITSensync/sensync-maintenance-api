@@ -34,8 +34,7 @@ const chartCanvas = new ChartJSNodeCanvas({
   },
 });
 
-async function BAKorektif(body) {
-  let site = body.site;
+function normalizeSite(site) {
   switch (site) {
     case "Sinar Sukses Mandiri":
       site = "SSM";
@@ -52,9 +51,20 @@ async function BAKorektif(body) {
     case "Papyrus Sakti":
       site = "Papyrus";
       break;
+    case "Sari Dumai Oleo":
+      site = "SDO";
+      break;
+    case "Ayoe Indotama Textile":
+      site = "Ayoetex";
+      break;
     default:
       break;
   }
+  return site;
+}
+
+async function BAKorektif(body) {
+  const site = normalizeSite(body.site);
 
   const content = fs.readFileSync("./templates/template_korektif.docx", "binary");
   const imageModule = new ImageModule({
@@ -215,26 +225,7 @@ async function BAPreventif(body) {
     body[key] = parseJSON(body[key]);
   });
 
-  let site = body.site;
-  switch (site) {
-    case "Sinar Sukses Mandiri":
-      site = "SSM";
-      break;
-    case "Bintang Cipta Perkasa":
-      site = "BCP";
-      break;
-    case "Indorama Synthetics Div. Spinning":
-      site = "Spinning";
-      break;
-    case "Besland Pertiwi":
-      site = "Besland";
-      break;
-    case "Papyrus Sakti":
-      site = "Papyrus";
-      break;
-    default:
-      break;
-  }
+  const site = normalizeSite(body.site);
 
   const content = fs.readFileSync("./templates/template_preventif.docx", "binary");
   const imageModule = new ImageModule({
@@ -702,26 +693,7 @@ async function BABulanan(body) {
   // fs.writeFileSync(`./tmp/ba_korektif_${body.site}_${fileDate}.pdf`, pdfBuf);
 
   // UPLOAD TO ODOO
-  let site = body.site;
-  switch (site) {
-    case "Sinar Sukses Mandiri":
-      site = "SSM";
-      break;
-    case "Bintang Cipta Perkasa":
-      site = "BCP";
-      break;
-    case "Indorama Synthetics Div. Spinning":
-      site = "Spinning";
-      break;
-    case "Besland Pertiwi":
-      site = "Besland";
-      break;
-    case "Papyrus Sakti":
-      site = "Papyrus";
-      break;
-    default:
-      break;
-  }
+  const site = normalizeSite(body.site);
   const filename = `berita_acara_${site}_${fileDate}.pdf`;
 
   const resultOdoo = await odooService.mainProcess(pdfBuf, [`BA Pemeliharaan`, site, "Bulanan"], filename);
@@ -863,26 +835,7 @@ async function BAST(body, type) {
   // fs.writeFileSync(`./tmp/ba_korektif_${body.site}_${fileDate}.pdf`, pdfBuf);
 
   // UPLOAD TO ODOO
-  let site = body.site;
-  switch (site) {
-    case "Sinar Sukses Mandiri":
-      site = "SSM";
-      break;
-    case "Bintang Cipta Perkasa":
-      site = "BCP";
-      break;
-    case "Indorama Synthetics Div. Spinning":
-      site = "Spinning";
-      break;
-    case "Besland Pertiwi":
-      site = "Besland";
-      break;
-    case "Papyrus Sakti":
-      site = "Papyrus";
-      break;
-    default:
-      break;
-  }
+  const site = normalizeSite(body.site);
   const filename = `berita_acara_serah_terima_${site}_${fileDate}.pdf`;
 
   const resultOdoo = await odooService.mainProcess(pdfBuf, [`BA Pemeliharaan`, site, "Serah Terima"], filename);
@@ -921,26 +874,7 @@ async function generateKalibrasi(body) {
     const data = body.kalibrasi;
     const now = new Date();
 
-    let site = body.site;
-    switch (site) {
-      case "Sinar Sukses Mandiri":
-        site = "SSM";
-        break;
-      case "Bintang Cipta Perkasa":
-        site = "BCP";
-        break;
-      case "Indorama Synthetics Div. Spinning":
-        site = "Spinning";
-        break;
-      case "Besland Pertiwi":
-        site = "Besland";
-        break;
-      case "Papyrus Sakti":
-        site = "Papyrus";
-        break;
-      default:
-        break;
-    }
+    const site = normalizeSite(body.site);
 
     const tanggal = new Intl.DateTimeFormat("id-ID", {
       day: "numeric",
@@ -1025,26 +959,7 @@ async function upload(files, body) {
       body[key] = parseJSON(body[key]);
     });
 
-    let site = body.site;
-    switch (site) {
-      case "Sinar Sukses Mandiri":
-        site = "SSM";
-        break;
-      case "Bintang Cipta Perkasa":
-        site = "BCP";
-        break;
-      case "Indorama Synthetics Div. Spinning":
-        site = "Spinning";
-        break;
-      case "Besland Pertiwi":
-        site = "Besland";
-        break;
-      case "Papyrus Sakti":
-        site = "Papyrus";
-        break;
-      default:
-        break;
-    }
+    const site = normalizeSite(body.site);
 
     const now = new Date();
 
@@ -1343,25 +1258,7 @@ async function generateReportKalibrasi(
   tanggalKalibrasi,
 ) {
   try {
-    switch (site) {
-      case "Sinar Sukses Mandiri":
-        site = "SSM";
-        break;
-      case "Bintang Cipta Perkasa":
-        site = "BCP";
-        break;
-      case "Indorama Synthetics Div. Spinning":
-        site = "Spinning";
-        break;
-      case "Besland Pertiwi":
-        site = "Besland";
-        break;
-      case "Papyrus Sakti":
-        site = "Papyrus";
-        break;
-      default:
-        break;
-    }
+    const siteNormalized = normalizeSite(site);
 
     const tanggalFormatted = new Intl.DateTimeFormat("id-ID", {
       day: "numeric",
@@ -1424,7 +1321,7 @@ async function generateReportKalibrasi(
     }
 
     doc.render({
-      site: site.toUpperCase(),
+      site: siteNormalized.toUpperCase(),
       tanggal: tanggalFormatted,
 
       // COD
@@ -1471,7 +1368,7 @@ async function generateReportKalibrasi(
     // const fileDate = dayjs()
     //   .format("DD-MM-YYYY");
 
-    const filename = `kalibrasi_${site}_${tanggalFormatted}.docx`;
+    const filename = `kalibrasi_${siteNormalized}_${tanggalFormatted}.docx`;
 
     // fs.writeFileSync(`./tmp/${filename}`, docxBuffer);
 
