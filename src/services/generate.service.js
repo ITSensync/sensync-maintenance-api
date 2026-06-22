@@ -1088,6 +1088,17 @@ function formatTwoDecimals(value) {
     ? numericValue.toFixed(2)
     : value;
 }
+function formatFourDecimals(value) {
+  if (value === null || value === undefined || value === "") {
+    return "";
+  }
+
+  const numericValue = Number(value);
+
+  return Number.isFinite(numericValue)
+    ? numericValue.toFixed(4)
+    : value;
+}
 
 function formatDecimalComma(value) {
   if (value === null || value === undefined || value === "") {
@@ -1140,11 +1151,11 @@ function pickSummaryValue(item = {}, aliases = []) {
 }
 
 function getPersamaanValue(item = {}) {
-  return formatTwoDecimals(pickSummaryValue(item, ["persamaan", "Persamaan"]));
+  return formatFourDecimals(pickSummaryValue(item, ["persamaan", "Persamaan"]));
 }
 
 function getR2Value(item = {}) {
-  return formatTwoDecimals(pickSummaryValue(item, ["r2", "R2"]));
+  return formatFourDecimals(pickSummaryValue(item, ["r2", "R2"]));
 }
 
 function getSensitivitasValue(item = {}) {
@@ -1212,9 +1223,9 @@ function getRegressionSummary(rows = []) {
   const r2 = ssTot === 0 ? 1 : 1 - (ssRes / ssTot);
 
   return {
-    persamaan: `y = ${formatTwoDecimals(regression.a)}x + ${formatTwoDecimals(regression.b)}`,
-    r2: formatTwoDecimals(Math.max(0, Math.min(1, r2))),
-    sensitivitas: formatTwoDecimals(regression.a),
+    persamaan: `y = ${formatFourDecimals(regression.a)}x + ${formatTwoDecimals(regression.b)}`,
+    r2: formatFourDecimals(Math.max(0, Math.min(1, r2))),
+    sensitivitas: formatFourDecimals(regression.a),
   };
 }
 
