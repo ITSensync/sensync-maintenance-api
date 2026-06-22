@@ -1160,7 +1160,7 @@ function getBiasSesudahValue(item = {}) {
 }
 
 function getAkurasiValue(item = {}) {
-  return normalizePercent(pickSummaryValue(item, ["akurasi", "Akurasi", "akurasi_1", "Akurasi_1"]));
+  return normalizePercent(pickSummaryValue(item, ["akurasi_1", "Akurasi_1"]));
 }
 
 function getRegressionSummary(rows = []) {
