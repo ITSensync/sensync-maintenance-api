@@ -1339,7 +1339,7 @@ async function generateReportKalibrasi(
     const nh3nRegressionRows = safe.nh3n.rows.length > 1;
     const regressionCharts = {
       cod_chart: await generateRegressionChart(safe.cod.rows, "COD", "Standar (mg/L)", "COD (mg/L)"),
-      ph_chart: await generateRegressionChart(safe.ph.rows, "PH", "", "pH (mg/L)"),
+      ph_chart: await generateRegressionChart(safe.ph.rows, "PH", "", ""),
       nh3n_chart: await generateRegressionChart(safe.nh3n.rows, "NH3N", "Standar (mg/L)", "NH3N (mg/L)"),
     };
 
@@ -1474,7 +1474,7 @@ export async function generateRegressionChart(rows, label = "Regression", xLabel
         title: {
           display: true,
           text: label,
-          font: { size: 16 },
+          font: { size: 18 },
         },
         legend: {
           display: false, // sembunyikan legend biar mirip Excel
@@ -1491,7 +1491,7 @@ export async function generateRegressionChart(rows, label = "Regression", xLabel
               xAdjust: -80, // geser kiri supaya tidak terpotong
               yAdjust: 30,
               content: [equationText, r2Text],
-              font: { size: 12 },
+              font: { size: 16 },
               textAlign: "center",
               color: "black",
               backgroundColor: "rgba(255,255,255,0.7)",
@@ -1501,8 +1501,19 @@ export async function generateRegressionChart(rows, label = "Regression", xLabel
         },
       },
       scales: {
-        x: { title: { display: true, text: xLabel }, min: 0 },
-        y: { title: { display: true, text: yLabel } }, // ✅ pakai parameter
+        x: {
+          title: { display: true, text: xLabel },
+          ticks: {
+            font: { size: 12 },
+          },
+          min: 0,
+        },
+        y: {
+          title: { display: true, text: yLabel },
+          ticks: {
+            font: { size: 12 },
+          },
+        }, // ✅ pakai parameter
       },
     },
   };
