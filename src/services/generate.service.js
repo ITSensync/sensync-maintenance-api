@@ -19,6 +19,11 @@ const PARAF_PATH = "./templates/paraf_korektif.png";
 const COD_GRAPH_PATH = "./tmp/cod_chart.png";
 const PH_GRAPH_PATH = "./tmp/ph_chart.png";
 const NH3N_GRAPH_PATH = "./tmp/nh3n_chart.png";
+const DOCX_IMAGE_PX_PER_CM = 37.795;
+const REPORT_CHART_SIZE = [
+  Math.round(12 * DOCX_IMAGE_PX_PER_CM),
+  Math.round(8 * DOCX_IMAGE_PX_PER_CM),
+];
 const serviceAccountAuth = new JWT({
   email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
   key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
@@ -1084,6 +1089,30 @@ function formatTwoDecimals(value) {
     : value;
 }
 
+function formatDecimalComma(value) {
+  if (value === null || value === undefined || value === "") {
+    return "";
+  }
+
+  if (typeof value === "number") {
+    return Number.isFinite(value)
+      ? String(value).replace(".", ",")
+      : value;
+  }
+
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  return value.replace(/(-?\d+)\.(\d+)/g, "$1,$2");
+}
+
+function formatRowsDecimalComma(rows = []) {
+  return rows.map(row => Object.fromEntries(
+    Object.entries(row).map(([field, value]) => [field, formatDecimalComma(value)]),
+  ));
+}
+
 function normalizePercent(value) {
   if (value === null || value === undefined || value === "") {
     return "";
@@ -1297,7 +1326,7 @@ async function generateReportKalibrasi(
       },
 
       getSize() {
-        return [600, 400];
+        return REPORT_CHART_SIZE;
       },
     });
 
@@ -1310,7 +1339,7 @@ async function generateReportKalibrasi(
     const nh3nRegressionRows = safe.nh3n.rows.length > 1;
     const regressionCharts = {
       cod_chart: await generateRegressionChart(safe.cod.rows, "COD", "Standar (mg/L)", "COD (mg/L)"),
-      ph_chart: await generateRegressionChart(safe.ph.rows, "PH", "Standar (mg/L)", "pH (mg/L)"),
+      ph_chart: await generateRegressionChart(safe.ph.rows, "PH", "", "pH (mg/L)"),
       nh3n_chart: await generateRegressionChart(safe.nh3n.rows, "NH3N", "Standar (mg/L)", "NH3N (mg/L)"),
     };
 
@@ -1325,41 +1354,41 @@ async function generateReportKalibrasi(
       tanggal: tanggalFormatted,
 
       // COD
-      cod_rows: safe.cod.rows ?? [],
-      cod_persamaan: safe.cod.persamaan ?? "",
-      cod_r2: safe.cod.r2 ?? "",
-      cod_sensitivitas: safe.cod.sensitivitas ?? "",
-      cod_bias_sebelum: safe.cod.biasSebelum ?? "",
-      cod_bias_sesudah: safe.cod.biasSesudah ?? "",
-      cod_akurasi: safe.cod.akurasi ?? "",
+      cod_rows: formatRowsDecimalComma(safe.cod.rows ?? []),
+      cod_persamaan: formatDecimalComma(safe.cod.persamaan),
+      cod_r2: formatDecimalComma(safe.cod.r2),
+      cod_sensitivitas: formatDecimalComma(safe.cod.sensitivitas),
+      cod_bias_sebelum: formatDecimalComma(safe.cod.biasSebelum),
+      cod_bias_sesudah: formatDecimalComma(safe.cod.biasSesudah),
+      cod_akurasi: formatDecimalComma(safe.cod.akurasi),
       cod_chart: COD_GRAPH_PATH,
 
       // PH
-      ph_rows: safe.ph.rows ?? [],
-      ph_persamaan: safe.ph.persamaan ?? "",
-      ph_r2: safe.ph.r2 ?? "",
-      ph_sensitivitas: safe.ph.sensitivitas ?? "",
-      ph_bias_sebelum: safe.ph.biasSebelum ?? "",
-      ph_bias_sesudah: safe.ph.biasSesudah ?? "",
-      ph_akurasi: safe.ph.akurasi ?? "",
+      ph_rows: formatRowsDecimalComma(safe.ph.rows ?? []),
+      ph_persamaan: formatDecimalComma(safe.ph.persamaan),
+      ph_r2: formatDecimalComma(safe.ph.r2),
+      ph_sensitivitas: formatDecimalComma(safe.ph.sensitivitas),
+      ph_bias_sebelum: formatDecimalComma(safe.ph.biasSebelum),
+      ph_bias_sesudah: formatDecimalComma(safe.ph.biasSesudah),
+      ph_akurasi: formatDecimalComma(safe.ph.akurasi),
       ph_chart: PH_GRAPH_PATH,
 
       // NH3N
-      nh3n_rows: safe.nh3n.rows ?? [],
+      nh3n_rows: formatRowsDecimalComma(safe.nh3n.rows ?? []),
       showNh3nRegression: nh3nRegressionRows,
-      nh3n_persamaan: safe.nh3n.persamaan ?? "",
-      nh3n_r2: safe.nh3n.r2 ?? "",
-      nh3n_sensitivitas: safe.nh3n.sensitivitas ?? "",
-      nh3n_bias_sebelum: safe.nh3n.biasSebelum ?? "",
-      nh3n_bias_sesudah: safe.nh3n.biasSesudah ?? "",
-      nh3n_akurasi: safe.nh3n.akurasi ?? "",
+      nh3n_persamaan: formatDecimalComma(safe.nh3n.persamaan),
+      nh3n_r2: formatDecimalComma(safe.nh3n.r2),
+      nh3n_sensitivitas: formatDecimalComma(safe.nh3n.sensitivitas),
+      nh3n_bias_sebelum: formatDecimalComma(safe.nh3n.biasSebelum),
+      nh3n_bias_sesudah: formatDecimalComma(safe.nh3n.biasSesudah),
+      nh3n_akurasi: formatDecimalComma(safe.nh3n.akurasi),
       nh3n_chart: nh3nRegressionRows ? NH3N_GRAPH_PATH : null,
 
       // TSS
-      tss_rows: safe.tss.rows ?? [],
-      tss_bias_sebelum: safe.tss.biasSebelum ?? "",
-      tss_bias_sesudah: safe.tss.biasSesudah ?? "",
-      tss_akurasi: safe.tss.akurasi ?? "",
+      tss_rows: formatRowsDecimalComma(safe.tss.rows ?? []),
+      tss_bias_sebelum: formatDecimalComma(safe.tss.biasSebelum),
+      tss_bias_sesudah: formatDecimalComma(safe.tss.biasSesudah),
+      tss_akurasi: formatDecimalComma(safe.tss.akurasi),
 
     });
 
