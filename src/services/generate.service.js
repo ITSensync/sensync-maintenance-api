@@ -1223,7 +1223,7 @@ function getRegressionSummary(rows = []) {
   const r2 = ssTot === 0 ? 1 : 1 - (ssRes / ssTot);
 
   return {
-    persamaan: `y = ${formatFourDecimals(regression.a)}x + ${formatTwoDecimals(regression.b)}`,
+    persamaan: `y = ${formatFourDecimals(regression.a)}x + ${formatFourDecimals(regression.b)}`,
     r2: formatFourDecimals(Math.max(0, Math.min(1, r2))),
     sensitivitas: formatFourDecimals(regression.a),
   };
@@ -1454,7 +1454,7 @@ export async function generateRegressionChart(rows, label = "Regression", xLabel
 
   // Format label persamaan
   const sign = regression.b >= 0 ? "+" : "-";
-  const equationText = `y = ${regression.a.toFixed(4)}x ${sign} ${Math.abs(regression.b).toFixed(2)}`;
+  const equationText = `y = ${regression.a.toFixed(4)}x ${sign} ${Math.abs(regression.b).toFixed(4)}`;
   const r2Text = `R² = ${r2.toFixed(4)}`;
 
   const config = {
