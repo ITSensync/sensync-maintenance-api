@@ -190,7 +190,7 @@ async function BAKorektif(body) {
   // UPLOAD TO ODOO
   const filename = `berita_acara_${site}_${fileDate}.pdf`;
 
-  const resultOdoo = await odooService.mainProcess(pdfBuf, [`BA Pemeliharaan`, site, "Korektif"], filename);
+  const resultOdoo = await odooService.mainProcess(pdfBuf, [`Berita Acara`, site, "Korektif"], filename);
 
   // add to database
   await documentService.add({
@@ -563,7 +563,7 @@ async function BAPreventifBase(body) {
   const site = body.site;
   const filename = `berita_acara_${site}_${fileDate}.pdf`;
 
-  const resultOdoo = await odooService.mainProcess(pdfBuf, [`BA Pemeliharaan`, site, "Preventif"], filename);
+  const resultOdoo = await odooService.mainProcess(pdfBuf, [`Berita Acara`, site, "Preventif"], filename);
 
   // GENERATE KALIBRASI
   /* const result = await generateKalibrasi(body.kalibrasi, site, fileDate);
@@ -701,7 +701,7 @@ async function BABulanan(body) {
   const site = normalizeSite(body.site);
   const filename = `berita_acara_${site}_${fileDate}.pdf`;
 
-  const resultOdoo = await odooService.mainProcess(pdfBuf, [`BA Pemeliharaan`, site, "Bulanan"], filename);
+  const resultOdoo = await odooService.mainProcess(pdfBuf, [`Berita Acara`, site, "Bulanan"], filename);
 
   // add to database
   await documentService.add({
@@ -843,7 +843,7 @@ async function BAST(body, type) {
   const site = normalizeSite(body.site);
   const filename = `berita_acara_serah_terima_${site}_${fileDate}.pdf`;
 
-  const resultOdoo = await odooService.mainProcess(pdfBuf, [`BA Pemeliharaan`, site, "Serah Terima"], filename);
+  const resultOdoo = await odooService.mainProcess(pdfBuf, [`Berita Acara`, site, "Serah Terima"], filename);
 
   // add to database
   await documentService.add({
