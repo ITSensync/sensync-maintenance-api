@@ -1318,7 +1318,7 @@ async function generateReportKalibrasi(
 
     // template word
     const content = fs.readFileSync(
-      "./templates/template_report_kalibrasi.docx",
+      siteNormalized === "Besland" ? "./templates/template_report_kalibrasi_besland.docx" : "./templates/template_report_kalibrasi.docx",
       "binary",
     );
 
@@ -1361,7 +1361,7 @@ async function generateReportKalibrasi(
     }
 
     doc.render({
-      site: siteNormalized.toUpperCase(),
+      site: siteNormalized === "Besland" ? siteNormalized.toUpperCase() : site.toUpperCase(),
       tanggal: tanggalFormatted,
 
       // COD
