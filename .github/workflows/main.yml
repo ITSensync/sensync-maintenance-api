@@ -38,5 +38,8 @@ jobs:
               --add-host=host.docker.internal:host-gateway \
               -e TZ=Asia/Jakarta \
               maintenance-api
+            
+            echo "Cleanup old images"
+            docker image prune -af
 
             echo "Deploy done"
