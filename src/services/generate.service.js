@@ -426,12 +426,12 @@ async function BAPreventif(body) {
   // return true; // for debugging
 }
 
-async function BAPreventifBase(body) {
+async function BAPreventifBase(body, type) {
   Object.keys(body).forEach((key) => {
     body[key] = parseJSON(body[key]);
   });
 
-  const content = fs.readFileSync("./templates/template_preventif_base.docx", "binary");
+  const content = fs.readFileSync(`./templates/template_preventif_${type}.docx`, "binary");
   const imageModule = new ImageModule({
     getImage(tagValue) {
       // ✅ 1. static paraf

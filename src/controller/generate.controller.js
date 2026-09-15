@@ -19,11 +19,11 @@ async function generateKorektif(req, res) {
 async function generatePreventif(req, res) {
   const type = req.params.type;
   let result;
-  if (type === "base") {
-    result = await generateService.BAPreventifBase(req.body);
+  if (type === "sparing") {
+    result = await generateService.BAPreventif(req.body);
   }
   else {
-    result = await generateService.BAPreventif(req.body);
+    result = await generateService.BAPreventifBase(req.body, type);
   }
 
   res.json(result);
