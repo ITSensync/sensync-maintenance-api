@@ -427,173 +427,178 @@ async function BAPreventif(body) {
 }
 
 async function BAPreventifBase(body, type) {
-  Object.keys(body).forEach((key) => {
-    body[key] = parseJSON(body[key]);
-  });
-
-  const content = fs.readFileSync(`./templates/template_preventif_${type}.docx`, "binary");
-  const imageModule = new ImageModule({
-    getImage(tagValue) {
-      // ✅ 1. static paraf
-      if (tagValue === PARAF_PATH) {
-        return fs.readFileSync(PARAF_PATH);
-      }
-
-      // ✅ 2. base64 image (ttd)
-      if (typeof tagValue === "string" && tagValue.includes("base64,")) {
-        const base64 = tagValue.split("base64,")[1];
-        return Buffer.from(base64, "base64");
-      }
-
-      // ✅ 3. pure base64 tanpa prefix
-      if (typeof tagValue === "string" && tagValue.length > 200) {
-        return Buffer.from(tagValue, "base64");
-      }
-
-      return null;
-    },
-
-    getSize(img, tagValue, tagName) {
-      if (tagName === "status") {
-        return [40, 40]; // paraf kecil
-      }
-
-      if (
-        tagName === "ttd_teknisi"
-        || tagName === "ttd_pengawas_lapangan"
-      ) {
-        return [175, 100]; // tanda tangan besar
-      }
-
-      return [100, 50]; // default fallback
-    },
-  });
-
-  const zip = new PizZip(content);
-  const doc = new Docxtemplater(zip, {
-    modules: [imageModule],
-    paragraphLoop: true,
-    linebreaks: true,
-  });
-
-  const now = new Date();
-
-  const today = new Intl.DateTimeFormat("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(now);
-
-  // format: Rabu, 4 Februari 2026
-  const tanggal = new Intl.DateTimeFormat("id-ID", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(now);
-
-  doc.render({
-    nomor_ba: body.nomor_ba,
-    site: body.site,
-    teknisi: body.teknisi,
-    pengawas_lapangan: body.pengawas_lapangan,
-    lokasi: body.lokasi,
-    alamat: body.alamat,
-    tanggal,
-    today,
-    ttd_teknisi: body.ttd_teknisi,
-    ttd_pengawas_lapangan: body.ttd_pengawas_lapangan,
-
-    // CHECKLIST STATUS
-    pembersihan_fisik_status: body.pembersihan_fisik?.status ? "Dilakukan" : "Tidak dilakukan",
-    pengecekan_status: body.pengecekan_pembersihan?.status ? "Dilakukan" : "Tidak dilakukan",
-    gas_status: body.sensor_gas?.status ? "Terhubung" : "Tidak terhubung",
-    meteorologi_status: body.sensor_meteorologi?.status ? "Terhubung" : "Tidak terhubung",
-    partikulat_status: body.sensor_partikulat?.status ? "Terhubung" : "Tidak terhubung",
-    kabel_koneksi_status: body.kabel_koneksi?.status ? "Baik" : "Bermasalah",
-    backup_status: body.pencatatan_backup_data?.status ? "Dilakukan" : "Tidak dilakukan",
-    catu_daya_status: body.catu_daya?.status ? "Berfungsi" : "Tidak Berfungsi",
-    komunikasi_status: body.komunikasi_data?.status ? "Terhubung" : "Tidak terhubung",
-    silika_status: body.silika_gel?.status ? "Dilakukan" : "Tidak dilakukan",
-    running_text_status: body.display_running_text?.status ? "Berfungsi" : "Tidak berfungsi",
-    pagar_status: body.pagar_pelindung?.status ? "Baik" : "Bermasalah",
-    cctv_status: body.cctv?.status ? "Berfungsi" : "Tidak berfungsi",
-
-    pembersihan_fisik_keterangan: body.pembersihan_fisik.keterangan,
-    pengecekan_keterangan: body.pengecekan_pembersihan.keterangan,
-    gas_keterangan: body.sensor_gas.keterangan,
-    meteorologi_keterangan: body.sensor_meteorologi.keterangan,
-    partikulat_keterangan: body.sensor_partikulat.keterangan,
-    kabel_koneksi_keterangan: body.kabel_koneksi.keterangan,
-    backup_keterangan: body.pencatatan_backup_data.keterangan,
-    catu_daya_keterangan: body.catu_daya.keterangan,
-    komunikasi_keterangan: body.komunikasi_data.keterangan,
-    silika_keterangan: body.silika_gel.keterangan,
-    running_text_keterangan: body.display_running_text.keterangan,
-    pagar_keterangan: body.pagar_pelindung.keterangan,
-    cctv_keterangan: body.cctv.keterangan,
-  });
-
-  const buf = doc.toBuffer();
-
-  // fs.writeFileSync(`./tmp/ba_preventif_${body.site}.docx`, buf);
-
-  // return `./tmp/ba_korektif_${body.site}.docx`;
-
-  // convert to pdf
-  const fileDate = new Intl.DateTimeFormat("id-ID", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  })
-    .format(now)
-    .replace(/\//g, "-");
-
-  const pdfBuf = await new Promise((resolve, reject) => {
-    libre.convert(buf, ".pdf", "writer_pdf_Export", (err, done) => {
-      if (err)
-        reject(err);
-      else resolve(done);
+  try {
+    Object.keys(body).forEach((key) => {
+      body[key] = parseJSON(body[key]);
     });
-  });
 
-  // fs.writeFileSync(`./tmp/ba_korektif_${body.site}_${fileDate}.pdf`, pdfBuf); //for debugging
+    const content = fs.readFileSync(`./templates/template_preventif_${type}.docx`, "binary");
+    const imageModule = new ImageModule({
+      getImage(tagValue) {
+        // ✅ 1. static paraf
+        if (tagValue === PARAF_PATH) {
+          return fs.readFileSync(PARAF_PATH);
+        }
 
-  // UPLOAD TO ODOO
-  const site = body.site;
-  const filename = `berita_acara_${site}_${fileDate}.pdf`;
+        // ✅ 2. base64 image (ttd)
+        if (typeof tagValue === "string" && tagValue.includes("base64,")) {
+          const base64 = tagValue.split("base64,")[1];
+          return Buffer.from(base64, "base64");
+        }
 
-  const resultOdoo = await odooService.mainProcess(pdfBuf, [`Berita Acara`, site, "Preventif"], filename);
+        // ✅ 3. pure base64 tanpa prefix
+        if (typeof tagValue === "string" && tagValue.length > 200) {
+          return Buffer.from(tagValue, "base64");
+        }
 
-  // GENERATE KALIBRASI
-  /* const result = await generateKalibrasi(body.kalibrasi, site, fileDate);
-  await odooService.mainProcess(result.buffer, ["4. Kalibrasi & QC", site, today], result.filename); */
+        return null;
+      },
 
-  // add to database
-  await documentService.add({
-    catatan: body.catatan || "",
-    link: resultOdoo.url,
-  });
+      getSize(img, tagValue, tagName) {
+        if (tagName === "status") {
+          return [40, 40]; // paraf kecil
+        }
 
-  // UPLOAD DOKUMENTASI KE ODOO
-  /* for (const file of files) {
-    await odooService.mainProcess(
-      file.buffer,
-      [`Maintenance Sparing ${body.lokasi}`, site, today],
-      file.originalname,
-    );
-  } */
+        if (
+          tagName === "ttd_teknisi"
+          || tagName === "ttd_pengawas_lapangan"
+        ) {
+          return [175, 100]; // tanda tangan besar
+        }
 
-  // TEMPORARY FILE FOR PREVIEW
-  const id = crypto.randomUUID();
-  const previewName = `${id}.pdf`;
-  const locationFile = `${filename}_${previewName}`;
-  fs.writeFileSync(`./tmp/${locationFile}`, pdfBuf);
+        return [100, 50]; // default fallback
+      },
+    });
 
-  return {
-    success: true,
-    url: `preview/${locationFile}`,
-  };
+    const zip = new PizZip(content);
+    const doc = new Docxtemplater(zip, {
+      modules: [imageModule],
+      paragraphLoop: true,
+      linebreaks: true,
+    });
+
+    const now = new Date();
+
+    const today = new Intl.DateTimeFormat("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(now);
+
+    // format: Rabu, 4 Februari 2026
+    const tanggal = new Intl.DateTimeFormat("id-ID", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(now);
+
+    doc.render({
+      nomor_ba: body.nomor_ba,
+      site: body.site,
+      teknisi: body.teknisi,
+      pengawas_lapangan: body.pengawas_lapangan,
+      lokasi: body.lokasi,
+      alamat: body.alamat,
+      tanggal,
+      today,
+      ttd_teknisi: body.ttd_teknisi,
+      ttd_pengawas_lapangan: body.ttd_pengawas_lapangan,
+
+      // CHECKLIST STATUS
+      pembersihan_fisik_status: body.pembersihan_fisik?.status ? "Dilakukan" : "Tidak dilakukan",
+      pengecekan_status: body.pengecekan_pembersihan?.status ? "Dilakukan" : "Tidak dilakukan",
+      gas_status: body.sensor_gas?.status ? "Terhubung" : "Tidak terhubung",
+      meteorologi_status: body.sensor_meteorologi?.status ? "Terhubung" : "Tidak terhubung",
+      partikulat_status: body.sensor_partikulat?.status ? "Terhubung" : "Tidak terhubung",
+      kabel_koneksi_status: body.kabel_koneksi?.status ? "Baik" : "Bermasalah",
+      backup_status: body.pencatatan_backup_data?.status ? "Dilakukan" : "Tidak dilakukan",
+      catu_daya_status: body.catu_daya?.status ? "Berfungsi" : "Tidak Berfungsi",
+      komunikasi_status: body.komunikasi_data?.status ? "Terhubung" : "Tidak terhubung",
+      silika_status: body.silika_gel?.status ? "Dilakukan" : "Tidak dilakukan",
+      running_text_status: body.display_running_text?.status ? "Berfungsi" : "Tidak berfungsi",
+      pagar_status: body.pagar_pelindung?.status ? "Baik" : "Bermasalah",
+      cctv_status: body.cctv?.status ? "Berfungsi" : "Tidak berfungsi",
+
+      pembersihan_fisik_keterangan: body.pembersihan_fisik?.keterangan ?? "",
+      pengecekan_keterangan: body.pengecekan_pembersihan?.keterangan ?? "",
+      gas_keterangan: body.sensor_gas?.keterangan ?? "",
+      meteorologi_keterangan: body.sensor_meteorologi?.keterangan ?? "",
+      partikulat_keterangan: body.sensor_partikulat?.keterangan ?? "",
+      kabel_koneksi_keterangan: body.kabel_koneksi?.keterangan ?? "",
+      backup_keterangan: body.pencatatan_backup_data?.keterangan ?? "",
+      catu_daya_keterangan: body.catu_daya?.keterangan ?? "",
+      komunikasi_keterangan: body.komunikasi_data?.keterangan ?? "",
+      silika_keterangan: body.silika_gel?.keterangan ?? "",
+      running_text_keterangan: body.display_running_text?.keterangan ?? "",
+      pagar_keterangan: body.pagar_pelindung?.keterangan ?? "",
+      cctv_keterangan: body.cctv?.keterangan ?? "",
+    });
+
+    const buf = doc.toBuffer();
+
+    // fs.writeFileSync(`./tmp/ba_preventif_${body.site}.docx`, buf);
+
+    // return `./tmp/ba_korektif_${body.site}.docx`;
+
+    // convert to pdf
+    const fileDate = new Intl.DateTimeFormat("id-ID", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    })
+      .format(now)
+      .replace(/\//g, "-");
+
+    const pdfBuf = await new Promise((resolve, reject) => {
+      libre.convert(buf, ".pdf", "writer_pdf_Export", (err, done) => {
+        if (err)
+          reject(err);
+        else resolve(done);
+      });
+    });
+
+    // fs.writeFileSync(`./tmp/ba_korektif_${body.site}_${fileDate}.pdf`, pdfBuf); //for debugging
+
+    // UPLOAD TO ODOO
+    const site = body.site;
+    const filename = `berita_acara_${site}_${fileDate}.pdf`;
+
+    const resultOdoo = await odooService.mainProcess(pdfBuf, [`Berita Acara`, site, "Preventif"], filename);
+
+    // GENERATE KALIBRASI
+    /* const result = await generateKalibrasi(body.kalibrasi, site, fileDate);
+    await odooService.mainProcess(result.buffer, ["4. Kalibrasi & QC", site, today], result.filename); */
+
+    // add to database
+    await documentService.add({
+      catatan: body.catatan || "",
+      link: resultOdoo.url,
+    });
+
+    // UPLOAD DOKUMENTASI KE ODOO
+    /* for (const file of files) {
+      await odooService.mainProcess(
+        file.buffer,
+        [`Maintenance Sparing ${body.lokasi}`, site, today],
+        file.originalname,
+      );
+    } */
+
+    // TEMPORARY FILE FOR PREVIEW
+    const id = crypto.randomUUID();
+    const previewName = `${id}.pdf`;
+    const locationFile = `${filename}_${previewName}`;
+    fs.writeFileSync(`./tmp/${locationFile}`, pdfBuf);
+
+    return {
+      success: true,
+      url: `preview/${locationFile}`,
+    };
+  }
+  catch (error) {
+    console.error(error);
+  }
 }
 
 async function BABulanan(body) {
