@@ -13,6 +13,7 @@ import PizZip from "pizzip";
 import XlsxPopulate from "xlsx-populate";
 import documentService from "./document.service.js";
 import excelParserService from "./excel-parser.service.js";
+import logService from "./log.service.js";
 import odooService from "./odoo.service.js";
 
 const PARAF_PATH = "./templates/paraf_korektif.png";
@@ -401,6 +402,13 @@ async function BAPreventif(body) {
   await documentService.add({
     catatan: body.catatan,
     link: resultOdoo.url,
+  });
+
+  await logService.add({
+    id_device: body.id_device,
+    teknisi: body.teknisi,
+    keterangan: body.keterangan,
+    opsi: body.catatan,
   });
 
   // UPLOAD DOKUMENTASI KE ODOO
