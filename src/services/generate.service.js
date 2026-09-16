@@ -404,12 +404,17 @@ async function BAPreventif(body) {
     link: resultOdoo.url,
   });
 
-  await logService.add({
-    id_device: body.id_device,
-    teknisi: body.teknisi,
-    keterangan: body.keterangan,
-    opsi: body.catatan,
-  });
+  const hasLogText = value =>
+    typeof value === "string" && value.trim().length > 0;
+
+  if (hasLogText(body.keterangan) && hasLogText(body.catatan)) {
+    await logService.add({
+      id_device: body.id_device,
+      teknisi: body.teknisi,
+      keterangan: body.keterangan,
+      opsi: body.catatan,
+    });
+  }
 
   // UPLOAD DOKUMENTASI KE ODOO
   /* for (const file of files) {
