@@ -10,7 +10,6 @@ router.post("/preventif/:type", middlewares.verifyToken, uploadDokumentasi, gene
 router.post("/kalibrasi", middlewares.verifyToken, generateController.generateKalibrasi);
 router.post("/bulanan", middlewares.verifyToken, uploadDokumentasi, generateController.generateBulanan);
 router.post("/serah-terima/:type", middlewares.verifyToken, uploadDokumentasi, generateController.generateBAST);
-router.post("/dokumentasi", middlewares.verifyToken, uploadDokumentasi, generateController.uploadDokumentasi);
 router.get("/preview/:file", uploadDokumentasi, generateController.previewFile);
 router.post("/cpi", generateController.inputCPI);
 router.post(

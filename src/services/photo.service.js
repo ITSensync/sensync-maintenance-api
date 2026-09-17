@@ -44,6 +44,95 @@ async function getAll(body = {}) {
   }
 }
 
+async function upload(files, body) {
+  try {
+    Object.keys(body).forEach((key) => {
+      body[key] = parseJSON(body[key]);
+    });
+
+    const site = normalizeSite(body.site);
+
+    const now = new Date();
+
+    const today = new Intl.DateTimeFormat("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(now);
+
+    let location;
+
+    if (body.type === "sparing") {
+      location = [`Maintenance Sparing ${body.domisili}`, site, today];
+    }
+    else if (body.type === "aqms") {
+      location = [`AQMS ${site}`, today];
+    }
+    else if (body.type === "aqms_mini") {
+      location = [`Mini Partikulat`, `${site}`, today];
+    }
+
+    for (const file of files) {
+      await odooService.mainProcess(
+        file.buffer,
+        location,
+        file.originalname,
+      );
+    }
+
+    return {
+      status: 200,
+      message: "Success Upload File",
+    };
+  }
+  catch (error) {
+    console.error(error);
+    return {
+      status: 500,
+      message: error.message,
+    };
+  }
+}
+
+function parseJSON(val) {
+  try {
+    return JSON.parse(val);
+  }
+  catch {
+    return val;
+  }
+}
+
+function normalizeSite(site) {
+  switch (site) {
+    case "Sinar Sukses Mandiri":
+      site = "SSM";
+      break;
+    case "Bintang Cipta Perkasa":
+      site = "BCP";
+      break;
+    case "Indorama Synthetics Div. Spinning":
+      site = "Spinning";
+      break;
+    case "Besland Pertiwi":
+      site = "Besland";
+      break;
+    case "Papyrus Sakti":
+      site = "Papyrus";
+      break;
+    case "Sari Dumai Oleo":
+      site = "SDO";
+      break;
+    case "Ayoe Indotama Textile":
+      site = "Ayoetex";
+      break;
+    default:
+      break;
+  }
+  return site;
+}
+
 export default {
   getAll,
+  upload,
 };

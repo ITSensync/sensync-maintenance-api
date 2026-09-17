@@ -60,12 +60,6 @@ async function generateKalibrasi(req, res) {
   res.status(result.status).send(result);
 }
 
-async function uploadDokumentasi(req, res) {
-  const result = await generateService.upload(req.files, req.body);
-
-  res.status(result.status).send(result);
-}
-
 async function previewFile(req, res) {
   const filePath = path.resolve("./tmp", req.params.file);
 
@@ -121,7 +115,6 @@ export default {
   generateReportKalibrasi,
   generateBulanan,
   generateBAST,
-  uploadDokumentasi,
   previewFile,
   inputCPI,
 };
