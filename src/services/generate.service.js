@@ -1000,6 +1000,9 @@ async function upload(files, body) {
     else if (body.type === "aqms") {
       location = [`AQMS ${site}`, today];
     }
+    else if (body.type === "aqms_mini") {
+      location = [`Mini Partikulat`, `${site}`, today];
+    }
 
     for (const file of files) {
       await odooService.mainProcess(

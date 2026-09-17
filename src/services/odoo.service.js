@@ -120,17 +120,31 @@ async function uploadBuffer(buffer, filename, folderId) {
     "documents.document",
     "read",
     [[docId]],
+    { fields: ["attachment_id"] },
+  );
+
+  const attachmentId = doc.attachment_id?.[0];
+
+  if (!attachmentId) {
+    throw new Error("Attachment Odoo tidak ditemukan untuk dokumen");
+  }
+
+  const [attachment] = await callKw(
+    "ir.attachment",
+    "read",
+    [[attachmentId]],
     { fields: ["access_token"] },
   );
 
-  const url = `${ODOO_URL}/web/content/${docId}?download=true`;
+  const url = `${ODOO_URL}/web/content/${attachmentId}?download=true`;
 
-  const publicUrl = doc.access_token
-    ? `${ODOO_URL}/web/content/${docId}?access_token=${doc.access_token}`
+  const publicUrl = attachment.access_token
+    ? `${ODOO_URL}/web/content/${attachmentId}?access_token=${attachment.access_token}`
     : url;
 
   return {
     id: docId,
+    attachmentId,
     url,
     publicUrl,
   };
@@ -153,8 +167,184 @@ async function mainProcess(buffer, folderPath = [], fileName) {
   return result;
 }
 
+async function getFolderFiles(folderPath = []) {
+  await odooLogin();
+
+  let parentId = null;
+
+  for (const name of folderPath) {
+    const domain = [
+      ["name", "=", name],
+      ["type", "=", "folder"],
+    ];
+
+    if (parentId) {
+      domain.push(["folder_id", "=", parentId]);
+    }
+
+    const folders = await callKw(
+      "documents.document",
+      "search_read",
+      [domain],
+      { fields: ["id"], limit: 1 },
+    );
+
+    if (!folders.length) {
+      return [];
+    }
+
+    parentId = folders[0].id;
+  }
+
+  if (!parentId) {
+    return [];
+  }
+
+  const files = await callKw(
+    "documents.document",
+    "search_read",
+    [[
+      ["folder_id", "=", parentId],
+      ["type", "!=", "folder"],
+    ]],
+    {
+      fields: ["id", "name", "mimetype", "access_token", "create_date"],
+      order: "create_date desc",
+    },
+  );
+
+  return files.map(file => ({
+    id: file.id,
+    name: file.name,
+    mimetype: file.mimetype,
+    createdAt: file.create_date,
+    url: `${ODOO_URL}/web/content/${file.id}?download=true`,
+    publicUrl: file.access_token
+      ? `${ODOO_URL}/web/content/${file.id}?access_token=${file.access_token}`
+      : null,
+  }));
+}
+
+async function findFolderId(folderPath = []) {
+  let parentId = null;
+
+  for (const name of folderPath) {
+    const domain = [
+      ["name", "=", name],
+      ["type", "=", "folder"],
+    ];
+
+    if (parentId) {
+      domain.push(["folder_id", "=", parentId]);
+    }
+
+    const folders = await callKw(
+      "documents.document",
+      "search_read",
+      [domain],
+      { fields: ["id"], limit: 1 },
+    );
+
+    if (!folders.length) {
+      return null;
+    }
+
+    parentId = folders[0].id;
+  }
+
+  return parentId;
+}
+
+function formatPhoto(file) {
+  const attachmentId = file.attachment_id?.[0];
+
+  return {
+    id: file.id,
+    attachmentId,
+    name: file.name,
+    mimetype: file.mimetype,
+    createdAt: file.create_date,
+    url: `${ODOO_URL}/web/content/${attachmentId}?download=false`,
+    publicUrl: file.access_token
+      ? `${ODOO_URL}/web/content/${attachmentId}?access_token=${file.access_token}`
+      : null,
+  };
+}
+
+async function getFolderPhotos(folderPath = []) {
+  await odooLogin();
+
+  const siteFolderId = await findFolderId(folderPath);
+
+  if (!siteFolderId) {
+    return [];
+  }
+
+  const dateFolders = await callKw(
+    "documents.document",
+    "search_read",
+    [[
+      ["folder_id", "=", siteFolderId],
+      ["type", "=", "folder"],
+    ]],
+    {
+      fields: ["id", "name", "create_date"],
+      order: "create_date desc",
+    },
+  );
+
+  const photosByDate = [];
+
+  for (const dateFolder of dateFolders) {
+    const files = await callKw(
+      "documents.document",
+      "search_read",
+      [[
+        ["folder_id", "=", dateFolder.id],
+        ["type", "!=", "folder"],
+      ]],
+      {
+        fields: ["id", "name", "mimetype", "attachment_id", "create_date"],
+        order: "create_date desc",
+      },
+    );
+
+    const attachmentIds = files
+      .map(file => file.attachment_id?.[0])
+      .filter(Boolean);
+
+    const accessTokens = new Map();
+
+    if (attachmentIds.length) {
+      // generate_access_token mengisi field access_token di DB
+      // DAN mengembalikan token-nya langsung, urut sesuai attachmentIds
+      const tokens = await callKw(
+        "ir.attachment",
+        "generate_access_token",
+        [attachmentIds],
+      );
+
+      attachmentIds.forEach((id, i) => {
+        accessTokens.set(id, tokens[i]);
+      });
+    }
+
+    photosByDate.push({
+      tanggal: dateFolder.name,
+      data: files.map(file => formatPhoto({
+        ...file,
+        access_token: accessTokens.get(file.attachment_id?.[0]),
+      })),
+    });
+  }
+
+  return photosByDate;
+}
+
 export default {
   odooLogin,
   searchFolder,
   mainProcess,
+  getFolderFiles,
+  getFolderPhotos,
 };
