@@ -26,7 +26,7 @@ async function getAll(body = {}) {
       body.folder_path ?? body.folderPath ?? body.folder,
       idDevice,
     );
-    const photos = await odooService.getFolderPhotos(folderPath);
+    const photos = await odooService.getFolder(folderPath);
 
     return {
       status: 200,

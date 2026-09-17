@@ -255,7 +255,7 @@ async function findFolderId(folderPath = []) {
   return parentId;
 }
 
-function formatPhoto(file) {
+function formatResponse(file) {
   const attachmentId = file.attachment_id?.[0];
 
   return {
@@ -271,7 +271,7 @@ function formatPhoto(file) {
   };
 }
 
-async function getFolderPhotos(folderPath = []) {
+async function getFolder(folderPath = []) {
   await odooLogin();
 
   const siteFolderId = await findFolderId(folderPath);
@@ -293,7 +293,7 @@ async function getFolderPhotos(folderPath = []) {
     },
   );
 
-  const photosByDate = [];
+  const fileByDate = [];
 
   for (const dateFolder of dateFolders) {
     const files = await callKw(
@@ -329,16 +329,16 @@ async function getFolderPhotos(folderPath = []) {
       });
     }
 
-    photosByDate.push({
-      tanggal: dateFolder.name,
-      data: files.map(file => formatPhoto({
+    fileByDate.push({
+      parent: dateFolder.name,
+      data: files.map(file => formatResponse({
         ...file,
         access_token: accessTokens.get(file.attachment_id?.[0]),
       })),
     });
   }
 
-  return photosByDate;
+  return fileByDate;
 }
 
 export default {
@@ -346,5 +346,5 @@ export default {
   searchFolder,
   mainProcess,
   getFolderFiles,
-  getFolderPhotos,
+  getFolder,
 };
