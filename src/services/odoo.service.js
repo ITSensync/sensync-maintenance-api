@@ -20,21 +20,32 @@ const DB = process.env.ODOO_DB;
 const USERNAME = process.env.ODOO_USERNAME;
 const PASSWORD = process.env.ODOO_PASSWORD;
 
-async function odooLogin() {
-  const res = await client.post(`${ODOO_URL}/web/session/authenticate`, {
-    jsonrpc: "2.0",
-    params: {
-      db: DB,
-      login: USERNAME,
-      password: PASSWORD,
-    },
-  });
+let loginPromise;
 
-  if (!res.data.result?.uid) {
-    throw new Error("Login gagal (credential / DB salah)");
+async function odooLogin() {
+  if (!loginPromise) {
+    loginPromise = client.post(`${ODOO_URL}/web/session/authenticate`, {
+      jsonrpc: "2.0",
+      params: {
+        db: DB,
+        login: USERNAME,
+        password: PASSWORD,
+      },
+    })
+      .then((res) => {
+        if (!res.data.result?.uid) {
+          throw new Error("Login gagal (credential / DB salah)");
+        }
+
+        console.log("Login Odoo OK:", res.data.result.uid);
+      })
+      .catch((error) => {
+        loginPromise = undefined;
+        throw error;
+      });
   }
 
-  console.log("✅ Login OK:", res.data.result.uid);
+  await loginPromise;
 }
 
 async function callKw(model, method, args = [], kwargs = {}) {
@@ -264,7 +275,7 @@ function formatResponse(file) {
     name: file.name,
     mimetype: file.mimetype,
     createdAt: file.create_date,
-    url: `${ODOO_URL}/web/content/${attachmentId}?download=false`,
+    url: `${ODOO_URL}/web/content/${attachmentId}?download=true`,
     publicUrl: file.access_token
       ? `${ODOO_URL}/web/content/${attachmentId}?access_token=${file.access_token}`
       : null,
