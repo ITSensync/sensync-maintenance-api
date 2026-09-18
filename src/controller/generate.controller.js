@@ -2,15 +2,6 @@ import fs from "node:fs";
 import path from "node:path";
 import generateService from "../services/generate.service.js";
 
-async function getAll(req, res) {
-  const result = await generateService.getAllBA({
-    ...req.query,
-    ...req.body,
-  });
-
-  res.status(result.status).send(result);
-}
-
 async function generateKorektif(req, res) {
   const result = await generateService.BAKorektif(req.body);
 
@@ -118,7 +109,6 @@ async function generateReportKalibrasi(req, res) {
 }
 
 export default {
-  getAll,
   generateKorektif,
   generatePreventif,
   generateKalibrasi,

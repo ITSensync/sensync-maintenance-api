@@ -26,12 +26,12 @@ async function getAll(body = {}) {
       body.folder_path ?? body.folderPath ?? body.folder,
       idDevice,
     );
-    const photos = await odooService.getFolder(folderPath);
+    const files = await odooService.getFolder(folderPath);
 
     return {
       status: 200,
-      message: "get photo data successful",
-      data: photos,
+      message: "get file data successful",
+      data: files,
     };
   }
   catch (error) {

@@ -69,7 +69,7 @@ function normalizeSite(site) {
   return site;
 }
 
-async function getAllBA(body = {}) {
+/* async function getAllBA(body = {}) {
   try {
     const idDevice = body.id_device ?? body.idDevice;
 
@@ -101,7 +101,7 @@ async function getAllBA(body = {}) {
       data: [],
     };
   }
-}
+} */
 
 async function BAKorektif(body) {
   const site = normalizeSite(body.site);
@@ -225,7 +225,9 @@ async function BAKorektif(body) {
   // UPLOAD TO ODOO
   const filename = `berita_acara_${site}_${fileDate}.pdf`;
 
-  const resultOdoo = await odooService.mainProcess(pdfBuf, [`Berita Acara`, site, "Korektif"], filename);
+  const notSparingType = body.type.includes("base") || body.type.includes("mini");
+  const typeName = body.type.includes("base") ? "BASE" : "MINI";
+  const resultOdoo = await odooService.mainProcess(pdfBuf, [`Berita Acara`, notSparingType ? `${typeName} ${site}` : `${site}`, "Korektif"], filename);
 
   // add to database
   await documentService.add({
@@ -610,8 +612,8 @@ async function BAPreventifBase(body, type) {
     // UPLOAD TO ODOO
     const site = body.site;
     const filename = `berita_acara_${site}_${fileDate}.pdf`;
-
-    const resultOdoo = await odooService.mainProcess(pdfBuf, [`Berita Acara`, site, "Preventif"], filename);
+    const typeName = type.includes("base") ? "BASE" : "MINI";
+    const resultOdoo = await odooService.mainProcess(pdfBuf, [`Berita Acara`, `${typeName} ${site}`, "Preventif"], filename);
 
     // GENERATE KALIBRASI
     /* const result = await generateKalibrasi(body.kalibrasi, site, fileDate);
@@ -1615,18 +1617,7 @@ function parseJSON(val) {
   }
 }
 
-function normalizeFolderPath(folderPath, idDevice) {
-  const input = folderPath ?? idDevice;
-  const path = Array.isArray(input) ? input : [input];
-
-  return path
-    .filter(name => typeof name === "string")
-    .flatMap(name => name.split("/").map(part => part.trim()))
-    .filter(Boolean);
-}
-
 export default {
-  getAllBA,
   BAKorektif,
   BAPreventif,
   BAPreventifBase,
