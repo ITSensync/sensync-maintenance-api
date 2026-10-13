@@ -1,11 +1,12 @@
 FROM node:22-bullseye
 
 # install libreoffice binary + fonts
-RUN apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libreoffice-writer \
     fonts-dejavu \
     fonts-liberation \
-    fonts-noto
+    fonts-noto \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
